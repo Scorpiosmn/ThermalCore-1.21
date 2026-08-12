@@ -1,0 +1,15 @@
+{
+  "values": [
+    "#c:gears/copper",
+    "#c:gears/gold",
+    "#c:gears/iron",
+    "#c:gears/netherite",
+    "#c:gears/diamond",
+    "#c:gears/emerald",
+    "#c:gears/lapis",
+    "#c:gears/quartz",
+    "#c:gears/enderium",
+    "#c:gears/lumium",
+    "#c:gears/signalum"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "tag": "c:nuggets/lumium"
+    },
+    "I": {
+      "item": "thermal:lumium_nugget"
+    }
+  },
+  "pattern": [
+    "###",
+    "#I#",
+    "###"
+  ],
+  "result": {
+    "item": "thermal:lumium_ingot"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "tag": "c:rosin"
+    },
+    "I": {
+      "item": "thermal:rosin"
+    }
+  },
+  "pattern": [
+    "###",
+    "#I#",
+    "###"
+  ],
+  "result": {
+    "item": "thermal:rosin_block"
+  }
+}

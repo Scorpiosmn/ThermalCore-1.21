@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "tag": "c:gems/apatite"
+    },
+    "I": {
+      "item": "thermal:apatite"
+    }
+  },
+  "pattern": [
+    "###",
+    "#I#",
+    "###"
+  ],
+  "result": {
+    "item": "thermal:apatite_block"
+  }
+}

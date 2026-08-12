@@ -1,0 +1,22 @@
+{
+  "values": [
+    "#c:storage_blocks/enderium",
+    "#c:storage_blocks/lumium",
+    "#c:storage_blocks/signalum",
+    "#c:storage_blocks/charcoal",
+    "#c:storage_blocks/gunpowder",
+    "#c:storage_blocks/sugar_cane",
+    "#c:storage_blocks/apatite",
+    "#c:storage_blocks/cinnabar",
+    "#c:storage_blocks/niter",
+    "#c:storage_blocks/sulfur",
+    "#c:storage_blocks/bitumen",
+    "#c:storage_blocks/coal_coke",
+    "#c:storage_blocks/slag",
+    "#c:storage_blocks/tar",
+    "#c:storage_blocks/apple",
+    "#c:storage_blocks/carrot",
+    "#c:storage_blocks/potato",
+    "#c:storage_blocks/beetroot"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "values": [
+    "#c:coins/copper",
+    "#c:coins/gold",
+    "#c:coins/iron",
+    "#c:coins/netherite",
+    "#c:coins/enderium",
+    "#c:coins/lumium",
+    "#c:coins/signalum"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "type": "thermal:tree_extractor",
+  "trunk": {
+    "Name": "minecraft:birch_log",
+    "Properties": {
+      "axis": "y"
+    }
+  },
+  "leaves": {
+    "Name": "minecraft:birch_leaves",
+    "Properties": {
+      "persistent": "false"
+    }
+  },
+  "sapling": "minecraft:birch_sapling",
+  "min_height": 5,
+  "max_height": 13,
+  "min_leaves": 16,
+  "max_leaves": 24,
+  "result": {
+    "fluid": "thermal:sap",
+    "amount": 10
+  }
+}

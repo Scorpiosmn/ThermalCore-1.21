@@ -1,0 +1,16 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": {
+    "type": "neoforge:or",
+    "values": [
+      "minecraft:dripstone_caves",
+      "minecraft:lush_caves"
+    ]
+  },
+  "spawners": {
+    "type": "thermal:basalz",
+    "maxCount": 3,
+    "minCount": 1,
+    "weight": 25
+  }
+}

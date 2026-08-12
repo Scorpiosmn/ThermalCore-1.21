@@ -1,0 +1,11 @@
+{
+  "values": [
+    "#c:plates/copper",
+    "#c:plates/gold",
+    "#c:plates/iron",
+    "#c:plates/netherite",
+    "#c:plates/enderium",
+    "#c:plates/lumium",
+    "#c:plates/signalum"
+  ]
+}

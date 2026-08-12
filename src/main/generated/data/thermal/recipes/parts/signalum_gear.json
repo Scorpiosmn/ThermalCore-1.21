@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "tag": "c:ingots/signalum"
+    },
+    "i": {
+      "tag": "forge:nuggets/iron"
+    }
+  },
+  "pattern": [
+    " # ",
+    "#i#",
+    " # "
+  ],
+  "result": {
+    "item": "thermal:signalum_gear"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "tag": "c:sawdust"
+    },
+    "I": {
+      "item": "thermal:sawdust"
+    }
+  },
+  "pattern": [
+    "###",
+    "#I#",
+    "###"
+  ],
+  "result": {
+    "item": "thermal:sawdust_block"
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "name": "作物",
+  "icon": "thermal:barley",
+  "read_by_default": true,
+  "flag": "mod:thermal_cultivation",
+  "category": "thermal:plants",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Thermal Cultivationは村人から種を購入して様々な作物を栽培できます。これらの作物は素手で右クリックして収穫できます。キノコの作物は$(l:thermal:world/plants/phytogro)フィト・ソイル$(/l)、菌糸、ポドゾルに植えることが出来ますが、骨粉やフィト・グローを与えることは出来ません。フィト・ソイルと$(l:thermal:equipment/tools/watering_can)ジョウロ$(/l)による成長促進効果は受けます。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "Amaranth",
+      "A.item1": "thermal:amaranth",
+      "A.item2": "thermal:amaranth_seeds",
+      "A.text": "A vibrant grain packed with nutrients and alchemical properties.",
+
+      "B.title": "大麦",
+      "B.item1": "thermal:barley",
+      "B.item2": "thermal:barley_seeds",
+      "B.text": "穀物の一つです。粉に挽いたり、麦芽にしてビールやウィスキーの原料になります。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "とうもろこし",
+      "A.item1": "thermal:corn",
+      "A.item2": "thermal:corn_seeds",
+      "A.text": "主要穀物として重要です。",
+
+      "B.title": "亜麻",
+      "B.item1": "thermal:flax",
+      "B.item2": "thermal:flax_seeds",
+      "B.text": "繊維に富む植物で、糸に加工しやすいです。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "タマネギ",
+      "A.item1": "thermal:onion",
+      "A.item2": "thermal:onion_seeds",
+      "A.text": "球根状の野菜で、料理の香味付けに使われることが多いです。人の涙も誘います。",
+
+      "B.title": "ラディッシュ",
+      "B.item1": "thermal:radish",
+      "B.item2": "thermal:radish_seeds",
+      "B.text": "根菜の一種で、生食、蒸し焼きで食べることが多いです。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "米",
+      "A.item1": "thermal:rice",
+      "A.item2": "thermal:rice_seeds",
+      "A.text": "世界で最も多く消費されている主要穀物です。収穫には手間がかかります。",
+
+      "B.title": "サディルート",
+      "B.item1": "thermal:sadiroot",
+      "B.item2": "thermal:sadiroot_seeds",
+      "B.text": "浄化作用のある薬用スパイスとして知られています。独特の香りを有しています。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "ホウレンソウ",
+      "A.item1": "thermal:spinach",
+      "A.item2": "thermal:spinach_seeds",
+      "A.text": "葉物野菜で、水兵が筋肉を増強するのに使います。",
+
+      "B.title": "パプリカ",
+      "B.item1": "thermal:bell_pepper",
+      "B.item2": "thermal:bell_pepper_seeds",
+      "B.text": "辛くないトウガラシの栽培品種の一つです。一般的には刻んで料理に使われます。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "ナス",
+      "A.item1": "thermal:eggplant",
+      "A.item2": "thermal:eggplant_seeds",
+      "A.text": "紫色でふわふわした$(l)果実$()です。多くの料理に使われ、他の風味や味を吸収しやすいです。",
+
+      "B.title": "サヤインゲン",
+      "B.item1": "thermal:green_bean",
+      "B.item2": "thermal:green_bean_seeds",
+      "B.text": "マメ科植物の未熟果の鞘です。それだけで食したり、様々な料理に使われます。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "ピーナッツ",
+      "A.item1": "thermal:peanut",
+      "A.item2": "thermal:peanut_seeds",
+      "A.text": "落花生の種です。煎って圧搾し油を得たり、すり潰してバター状に加工することが多いです。",
+
+      "B.title": "イチゴ",
+      "B.item1": "thermal:strawberry",
+      "B.item2": "thermal:strawberry_seeds",
+      "B.text": "甘く赤い果実です。様々な調味料やデザートに使われます。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "トマト",
+      "A.item1": "thermal:tomato",
+      "A.item2": "thermal:tomato_seeds",
+      "A.text": "香り豊かで赤い$(l)果実$()です。スライスして料理に供するほか、絞ってソースやスープにすることも多いです。",
+
+      "B.title": "コーヒー",
+      "B.item1": "thermal:coffee",
+      "B.item2": "thermal:coffee_seeds",
+      "B.text": "コーヒーの木の実で、コーヒーチェリーとの名があります。ピット(豆のこと)を焙煎して挽き、淹れると美味しい飲み物となります。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "茶葉",
+      "A.item1": "thermal:tea",
+      "A.item2": "thermal:tea_seeds",
+      "A.text": "チャノキの葉です。乾燥して加工し、淹れることでリラックス効果のある飲み物になります。",
+
+      "B.title": "ホップ",
+      "B.item1": "thermal:hops",
+      "B.item2": "thermal:hops_seeds",
+      "B.text": "ホップの実です。ビールの香り付けに使われます。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "フロストメロン",
+      "A.item1": "thermal:frost_melon_slice",
+      "A.item2": "thermal:frost_melon_seeds",
+      "A.text": "メロンの青い品種です。食すと熱い面すらも氷のように感じられるようです。",
+
+      "B.title": "フラックスハリタケ",
+      "B.item1": "minecraft:redstone",
+      "B.item2": "thermal:redstone_mushroom_spores",
+      "B.text": "成熟するとレッドストーン質の粘つく乳液を滲み出すキノコです。"
+    },
+    {
+      "type": "2-2_item_page",
+
+      "A.title": "ヨアカリタケ",
+      "A.item1": "minecraft:glowstone_dust",
+      "A.item2": "thermal:glowstone_mushroom_spores",
+      "A.text": "傘にキラキラと光る粉をうっすらと分泌する、輝くキノコです。",
+
+      "B.title": "ブームッシュルーム",
+      "B.item1": "minecraft:gunpowder",
+      "B.item2": "thermal:gunpowder_mushroom_spores",
+      "B.text": "裏側に火薬の網を生成する、荒々しい性質のキノコです。"
+    },
+    {
+      "type": "2_item_page",
+
+      "A.title": "スライタケ",
+      "A.item1": "minecraft:slime_ball",
+      "A.item2": "thermal:slime_mushroom_spores",
+      "A.text": "ネバネバするキノコで、自分の身を守るためにスライムを分泌し、球状に固まります。"
+    }
+  ]
+}

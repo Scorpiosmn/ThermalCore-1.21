@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    {
+      "item": "thermal:compost"
+    },
+    {
+      "tag": "forge:sand"
+    },
+    {
+      "tag": "c:slag"
+    }
+  ],
+  "result": {
+    "item": "minecraft:dirt"
+  }
+}

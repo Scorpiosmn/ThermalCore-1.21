@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    {
+      "item": "thermal:compost"
+    },
+    {
+      "tag": "minecraft:leaves"
+    },
+    {
+      "tag": "forge:sand"
+    },
+    {
+      "tag": "c:slag"
+    }
+  ],
+  "result": {
+    "item": "minecraft:podzol"
+  }
+}

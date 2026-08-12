@@ -1,0 +1,21 @@
+{
+  "type": "thermal:tree_extractor",
+  "trunk": {
+    "Name": "minecraft:cherry_log"
+  },
+  "leaves": {
+    "Name": "minecraft:cherry_leaves",
+    "Properties": {
+      "persistent": "false"
+    }
+  },
+  "sapling": "minecraft:cherry_sapling",
+  "min_height": 4,
+  "max_height": 8,
+  "min_leaves": 16,
+  "max_leaves": 24,
+  "result": {
+    "fluid": "thermal:resin",
+    "amount": 15
+  }
+}

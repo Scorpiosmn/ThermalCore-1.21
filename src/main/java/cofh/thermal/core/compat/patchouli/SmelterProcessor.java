@@ -22,7 +22,7 @@ public class SmelterProcessor implements IComponentProcessor {
 
         if (!variables.has("recipe"))
             return;
-        ResourceLocation recipeId = new ResourceLocation(variables.get("recipe").asString());
+        ResourceLocation recipeId = ResourceLocation.parse(variables.get("recipe", level.registryAccess()).asString());
         Optional<? extends RecipeHolder<?>> recipe = level.getRecipeManager().byKey(recipeId);
         if (recipe.isPresent() && recipe.get().value() instanceof SmelterRecipe) {
             this.recipe = (SmelterRecipe) recipe.get().value();
@@ -37,12 +37,12 @@ public class SmelterProcessor implements IComponentProcessor {
         if (recipe == null)
             return null;
         if (key.equals("out"))
-            return IVariable.from(recipe.getOutputItems().get(0));
+            return IVariable.from(recipe.getOutputItems().get(0), level.registryAccess());
         if (key.startsWith("in")) {
             int index = Integer.parseInt(key.substring(key.length() - 1)) - 1;
             if (recipe.getInputItems().size() <= index)
                 return null;
-            return IVariable.wrapList(Arrays.stream(recipe.getInputItems().get(index).getItems()).map(IVariable::from).collect(Collectors.toList()));
+            return IVariable.wrapList(Arrays.stream(recipe.getInputItems().get(index).getItems()).map(stack -> IVariable.from(stack, level.registryAccess())).collect(Collectors.toList()), level.registryAccess());
         }
         return null;
     }

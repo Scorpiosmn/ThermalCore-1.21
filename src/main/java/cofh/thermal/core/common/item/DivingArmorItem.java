@@ -2,22 +2,23 @@ package cofh.thermal.core.common.item;
 
 import cofh.core.client.renderer.entity.model.ArmorFullSuitModel;
 import cofh.core.common.item.ArmorItemCoFH;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -29,26 +30,25 @@ public class DivingArmorItem extends ArmorItemCoFH {
     protected static final double[] SWIM_SPEED_BONUS = new double[]{0.60D, 0.30D, 0.10D, 0.0D};
     protected static final int AIR_DURATION = 1800;
 
-    private Multimap<Attribute, AttributeModifier> armorAttributes;
+    private ItemAttributeModifiers armorAttributes;
 
-    public DivingArmorItem(ArmorMaterial pMaterial, ArmorItem.Type pType, Item.Properties pProperties) {
+    public DivingArmorItem(Holder<ArmorMaterial> pMaterial, ArmorItem.Type pType, Item.Properties pProperties) {
 
         super(pMaterial, pType, pProperties);
 
-        ImmutableMultimap.Builder<Attribute, AttributeModifier> multimap = ImmutableMultimap.builder();
-        armorAttributes = multimap.build();
+        armorAttributes = super.getDefaultAttributeModifiers();
     }
 
     public void setup() {
 
-        ImmutableMultimap.Builder<Attribute, AttributeModifier> multimap = ImmutableMultimap.builder();
-        multimap.putAll(super.getDefaultAttributeModifiers(getType().getSlot()));
-        multimap.put(SWIM_SPEED.value(), new AttributeModifier(UUID_SWIM_SPEED[getType().getSlot().getIndex()], "Swim Speed", SWIM_SPEED_BONUS[getType().getSlot().getIndex()], AttributeModifier.Operation.ADDITION));
-        armorAttributes = multimap.build();
+        armorAttributes = super.getDefaultAttributeModifiers().withModifierAdded(
+                SWIM_SPEED,
+                new AttributeModifier(ResourceLocation.fromNamespaceAndPath("thermal", "swim_speed." + getType().getName()), SWIM_SPEED_BONUS[getType().getSlot().getIndex()], AttributeModifier.Operation.ADD_VALUE),
+                EquipmentSlotGroup.bySlot(getType().getSlot()));
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
 
         if (getType().getSlot() == EquipmentSlot.HEAD) {
             tooltip.add(getTextComponent("info.thermal.diving_helmet").withStyle(ChatFormatting.GOLD));
@@ -56,15 +56,15 @@ public class DivingArmorItem extends ArmorItemCoFH {
     }
 
     @Override
-    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
+    public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
 
-        return slot == getType().getSlot() ? armorAttributes : ImmutableMultimap.of();
+        return armorAttributes;
     }
 
     @Override
-    public void onArmorTick(ItemStack stack, Level world, Player player) {
+    public void inventoryTick(ItemStack stack, Level world, Entity entity, int slot, boolean selected) {
 
-        if (getType().getSlot() == EquipmentSlot.HEAD) {
+        if (entity instanceof Player player && getType().getSlot() == EquipmentSlot.HEAD && player.getItemBySlot(EquipmentSlot.HEAD) == stack) {
             if (player.getAirSupply() < player.getMaxAirSupply() && world.random.nextInt(5) > 0) {
                 player.setAirSupply(player.getAirSupply() + 1);
             }

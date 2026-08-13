@@ -6,10 +6,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.neoforged.neoforge.common.IPlantable;
 
 public class ChargedSoilBlock extends SoilBlock {
 
@@ -34,7 +34,7 @@ public class ChargedSoilBlock extends SoilBlock {
         BlockPos abovePos = pos.above();
         BlockState aboveState = worldIn.getBlockState(abovePos);
 
-        if (aboveState.getBlock() instanceof IPlantable && aboveState.isRandomlyTicking()) {
+        if (aboveState.getBlock() instanceof BonemealableBlock && aboveState.isRandomlyTicking()) {
             int charge = state.getValue(CHARGED);
             int boost = 1 + charge;
             for (int i = 0; i < boost; ++i) {
@@ -51,8 +51,8 @@ public class ChargedSoilBlock extends SoilBlock {
         int charge = state.getValue(CHARGED);
         if (charge < 4) {
             worldIn.setBlock(pos, state.setValue(CHARGED, charge + 1), 2);
-        } else if (worldIn instanceof ServerLevel) {
-            state.getBlock().tick(state, (ServerLevel) worldIn, pos, worldIn.random);
+        } else if (worldIn instanceof ServerLevel serverLevel) {
+            ((ChargedSoilBlock) state.getBlock()).tick(state, serverLevel, pos, worldIn.random);
         }
     }
 

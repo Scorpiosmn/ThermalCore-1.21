@@ -27,8 +27,8 @@ public class BottlerRecipeNBT extends BaseMachineRecipe {
 
         FluidStack fluid = inventory.inputTanks().get(0).getFluidStack();
         ItemStack item = outputItems.get(0).copy();
-        if (fluid.hasTag()) {
-            item.setTag(fluid.getTag().copy());
+        if (!fluid.isComponentsPatchEmpty()) {
+            item.applyComponents(fluid.getComponents());
         }
         return Collections.singletonList(item);
     }

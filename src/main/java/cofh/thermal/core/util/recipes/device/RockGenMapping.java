@@ -3,16 +3,16 @@ package cofh.thermal.core.util.recipes.device;
 import cofh.lib.util.recipes.SerializableRecipe;
 import cofh.thermal.core.util.managers.device.RockGenManager;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-
-import javax.annotation.Nullable;
 
 import static cofh.lib.util.Utils.getRegistryName;
 import static cofh.lib.util.recipes.RecipeJsonUtils.*;
@@ -71,18 +71,25 @@ public class RockGenMapping extends SerializableRecipe {
     // region SERIALIZER
     public static class Serializer implements RecipeSerializer<RockGenMapping> {
 
-        public static final Codec<RockGenMapping> CODEC = RecordCodecBuilder.create(builder -> builder.group(
+        public static final MapCodec<RockGenMapping> CODEC = RecordCodecBuilder.mapCodec(builder -> builder.group(
                         Codec.INT.optionalFieldOf(TIME, RockGenManager.instance().getDefaultEnergy()).forGetter(recipe -> recipe.time),
                         BuiltInRegistries.BLOCK.byNameCodec().optionalFieldOf(BELOW, Blocks.AIR).forGetter(recipe -> recipe.below),
                         BuiltInRegistries.BLOCK.byNameCodec().fieldOf(ADJACENT).forGetter(recipe -> recipe.adjacent),
-                        ItemStack.ITEM_WITH_COUNT_CODEC.fieldOf(RESULT).forGetter(recipe -> recipe.result)
+                        ItemStack.STRICT_CODEC.fieldOf(RESULT).forGetter(recipe -> recipe.result)
                 ).apply(builder, RockGenMapping::new)
         );
+        public static final StreamCodec<RegistryFriendlyByteBuf, RockGenMapping> STREAM_CODEC = StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
 
         @Override
-        public Codec<RockGenMapping> codec() {
+        public MapCodec<RockGenMapping> codec() {
 
             return CODEC;
+        }
+
+        @Override
+        public StreamCodec<RegistryFriendlyByteBuf, RockGenMapping> streamCodec() {
+
+            return STREAM_CODEC;
         }
 
         //        @Override
@@ -119,25 +126,22 @@ public class RockGenMapping extends SerializableRecipe {
         //            return new RockGenMapping(recipeId, time, below, adjacent, result);
         //        }
 
-        @Nullable
-        @Override
-        public RockGenMapping fromNetwork(FriendlyByteBuf buffer) {
+        private static RockGenMapping fromNetwork(RegistryFriendlyByteBuf buffer) {
 
             int time = buffer.readInt();
             Block trunk = BuiltInRegistries.BLOCK.get(buffer.readResourceLocation());
             Block leaves = BuiltInRegistries.BLOCK.get(buffer.readResourceLocation());
-            ItemStack result = buffer.readItem();
+            ItemStack result = ItemStack.STREAM_CODEC.decode(buffer);
 
             return new RockGenMapping(time, trunk, leaves, result);
         }
 
-        @Override
-        public void toNetwork(FriendlyByteBuf buffer, RockGenMapping recipe) {
+        private static void toNetwork(RegistryFriendlyByteBuf buffer, RockGenMapping recipe) {
 
             buffer.writeInt(recipe.time);
             buffer.writeResourceLocation(getRegistryName(recipe.below));
             buffer.writeResourceLocation(getRegistryName(recipe.adjacent));
-            buffer.writeItem(recipe.result);
+            ItemStack.STREAM_CODEC.encode(buffer, recipe.result);
         }
 
     }

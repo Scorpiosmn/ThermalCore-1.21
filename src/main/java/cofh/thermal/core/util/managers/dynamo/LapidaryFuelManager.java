@@ -25,9 +25,8 @@ public class LapidaryFuelManager extends SingleItemFuelManager {
     public void refresh(RecipeManager recipeManager) {
 
         clear();
-        var recipes = recipeManager.byType(LAPIDARY_FUEL.get());
-        for (var entry : recipes.entrySet()) {
-            addFuel(entry.getValue().value());
+        for (var recipe : recipeManager.getAllRecipesFor(LAPIDARY_FUEL.get())) {
+            addFuel(recipe.value());
         }
     }
     // endregion

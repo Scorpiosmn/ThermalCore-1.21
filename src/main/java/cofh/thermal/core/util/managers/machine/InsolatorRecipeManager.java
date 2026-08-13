@@ -78,13 +78,11 @@ public class InsolatorRecipeManager extends SingleItemRecipeManager.Catalyzed {
     public void refresh(RecipeManager recipeManager) {
 
         clear();
-        var recipes = recipeManager.byType(INSOLATOR_RECIPE.get());
-        for (var entry : recipes.entrySet()) {
-            addRecipe(entry.getValue().value());
+        for (var recipe : recipeManager.getAllRecipesFor(INSOLATOR_RECIPE.get())) {
+            addRecipe(recipe.value());
         }
-        var catalysts = recipeManager.byType(INSOLATOR_CATALYST.get());
-        for (var entry : catalysts.entrySet()) {
-            addCatalyst(entry.getValue().value());
+        for (var recipe : recipeManager.getAllRecipesFor(INSOLATOR_CATALYST.get())) {
+            addCatalyst(recipe.value());
         }
     }
     // endregion

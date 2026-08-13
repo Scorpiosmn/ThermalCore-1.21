@@ -78,9 +78,8 @@ public class FurnaceRecipeManager extends SingleItemRecipeManager {
                 addRecipe(recipe.value());
             }
         }
-        var recipes = recipeManager.byType(FURNACE_RECIPE.get());
-        for (var entry : recipes.entrySet()) {
-            addRecipe(entry.getValue().value());
+        for (var recipe : recipeManager.getAllRecipesFor(FURNACE_RECIPE.get())) {
+            addRecipe(recipe.value());
         }
     }
     // endregion
@@ -95,7 +94,7 @@ public class FurnaceRecipeManager extends SingleItemRecipeManager {
 
     protected void createConvertedRecipes(RecipeManager recipeManager) {
 
-        for (var recipe : recipeManager.byType(RecipeType.SMELTING).values()) {
+        for (var recipe : recipeManager.getAllRecipesFor(RecipeType.SMELTING)) {
             createConvertedRecipe(recipe.value());
         }
     }
@@ -113,8 +112,8 @@ public class FurnaceRecipeManager extends SingleItemRecipeManager {
 
         ItemStack recipeOutput = recipe.result;
         float experience = recipe.getExperience();
-        int energy = defaultFoodRecipes && recipeOutput.getItem().isEdible() ? defaultEnergy / 2 : defaultEnergy;
-        return new RecipeHolder<>(new ResourceLocation(ID_THERMAL, "furnace_" + recipe.getIngredients().get(0).hashCode()),
+        int energy = defaultFoodRecipes && recipeOutput.getFoodProperties(null) != null ? defaultEnergy / 2 : defaultEnergy;
+        return new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(ID_THERMAL, "furnace_" + recipe.getIngredients().get(0).hashCode()),
                 new FurnaceRecipe(energy, experience, recipe));
     }
     // endregion

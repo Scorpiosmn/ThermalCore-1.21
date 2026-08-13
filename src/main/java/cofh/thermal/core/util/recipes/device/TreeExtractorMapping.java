@@ -6,17 +6,16 @@ import cofh.lib.util.recipes.JsonMapCodec;
 import cofh.lib.util.recipes.SerializableRecipe;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.fluids.FluidStack;
-
-import javax.annotation.Nullable;
 
 import static cofh.lib.util.recipes.RecipeJsonUtils.*;
 import static cofh.thermal.core.init.registries.TCoreRecipeSerializers.TREE_EXTRACTOR_SERIALIZER;
@@ -102,21 +101,29 @@ public class TreeExtractorMapping extends SerializableRecipe {
     // region SERIALIZER
     public static class Serializer implements RecipeSerializer<TreeExtractorMapping> {
 
-        @Override
-        public Codec<TreeExtractorMapping> codec() {
+        protected static final MapCodec<TreeExtractorMapping> CODEC = JsonMapCodec.INSTANCE
+                .flatXmap(json -> {
+                    try {
+                        return DataResult.success(fromJson(json));
+                    } catch (JsonParseException e) {
+                        return DataResult.error(e::getMessage);
+                    }
+                }, recipe -> DataResult.error(() -> "Tree extractor mapping encoding is not supported."));
+        protected static final StreamCodec<RegistryFriendlyByteBuf, TreeExtractorMapping> STREAM_CODEC = StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
 
-            return JsonMapCodec.INSTANCE
-                    .flatXmap(json -> {
-                        try {
-                            return DataResult.success(fromJson(json));
-                        } catch (JsonParseException e) {
-                            return DataResult.error(e::getMessage);
-                        }
-                    }, recipe -> DataResult.success(toJson(recipe)))
-                    .codec();
+        @Override
+        public MapCodec<TreeExtractorMapping> codec() {
+
+            return CODEC;
         }
 
-        public TreeExtractorMapping fromJson(JsonObject json) {
+        @Override
+        public StreamCodec<RegistryFriendlyByteBuf, TreeExtractorMapping> streamCodec() {
+
+            return STREAM_CODEC;
+        }
+
+        protected static TreeExtractorMapping fromJson(JsonObject json) {
 
             BlockIngredient logs = BlockIngredient.EMPTY;
             BlockIngredient leaves = BlockIngredient.EMPTY;
@@ -162,19 +169,12 @@ public class TreeExtractorMapping extends SerializableRecipe {
             return new TreeExtractorMapping(logs, leaves, sapling, fluid, minHeight, Math.max(maxHeight, minHeight), minLeaves, Math.max(maxLeaves, minLeaves));
         }
 
-        protected JsonObject toJson(TreeExtractorMapping mapping) {
-
-            return null;
-        }
-
-        @Nullable
-        @Override
-        public TreeExtractorMapping fromNetwork(FriendlyByteBuf buffer) {
+        private static TreeExtractorMapping fromNetwork(RegistryFriendlyByteBuf buffer) {
 
             BlockIngredient logs = BlockIngredient.fromNetwork(buffer);
             BlockIngredient leaves = BlockIngredient.fromNetwork(buffer);
             Block sapling = BuiltInRegistries.BLOCK.get(buffer.readResourceLocation());
-            FluidStack fluid = buffer.readFluidStack();
+            FluidStack fluid = FluidStack.STREAM_CODEC.decode(buffer);
             int minHeight = buffer.readInt();
             int maxHeight = buffer.readInt();
             int minLeaves = buffer.readInt();
@@ -183,13 +183,12 @@ public class TreeExtractorMapping extends SerializableRecipe {
             return new TreeExtractorMapping(logs, leaves, sapling, fluid, minHeight, maxHeight, minLeaves, maxLeaves);
         }
 
-        @Override
-        public void toNetwork(FriendlyByteBuf buffer, TreeExtractorMapping recipe) {
+        private static void toNetwork(RegistryFriendlyByteBuf buffer, TreeExtractorMapping recipe) {
 
             recipe.trunk.toNetwork(buffer);
             recipe.leaves.toNetwork(buffer);
             buffer.writeResourceLocation(Utils.getRegistryName(recipe.sapling));
-            buffer.writeFluidStack(recipe.fluid);
+            FluidStack.STREAM_CODEC.encode(buffer, recipe.fluid);
             buffer.writeInt(recipe.minHeight);
             buffer.writeInt(recipe.maxHeight);
             buffer.writeInt(recipe.minLeaves);

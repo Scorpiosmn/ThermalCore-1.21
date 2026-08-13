@@ -6,11 +6,14 @@ import cofh.lib.api.item.IFluidContainerItem;
 import cofh.lib.common.fluid.FluidStorageCoFH;
 import cofh.lib.util.helpers.StringHelper;
 import cofh.thermal.core.common.block.entity.storage.FluidCellBlockEntity;
+import cofh.thermal.core.init.registries.TCoreBlockEntities;
 import cofh.thermal.lib.common.item.BlockItemAugmentable;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
@@ -25,6 +28,7 @@ import static cofh.core.util.helpers.AugmentableHelper.getPropertyWithDefault;
 import static cofh.core.util.helpers.AugmentableHelper.setAttributeFromAugmentMax;
 import static cofh.core.util.helpers.FluidHelper.addPotionTooltip;
 import static cofh.lib.api.ContainerType.FLUID;
+import static cofh.lib.util.Utils.BUILTIN_ACCESS;
 import static cofh.lib.util.constants.NBTTags.*;
 import static cofh.lib.util.helpers.StringHelper.*;
 import static net.minecraft.nbt.Tag.TAG_COMPOUND;
@@ -57,15 +61,11 @@ public class FluidCellBlockItem extends BlockItemAugmentable implements IFluidCo
         }
     }
 
-    protected void setAttributesFromAugment(ItemStack container, CompoundTag augmentData) {
+    protected void setAttributesFromAugment(CompoundTag properties, CompoundTag augmentData) {
 
-        CompoundTag subTag = container.getTagElement(TAG_PROPERTIES);
-        if (subTag == null) {
-            return;
-        }
-        setAttributeFromAugmentMax(subTag, augmentData, TAG_AUGMENT_BASE_MOD);
-        setAttributeFromAugmentMax(subTag, augmentData, TAG_AUGMENT_FLUID_STORAGE);
-        setAttributeFromAugmentMax(subTag, augmentData, TAG_AUGMENT_FLUID_CREATIVE);
+        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_BASE_MOD);
+        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_FLUID_STORAGE);
+        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_FLUID_CREATIVE);
     }
 
     //    @Override
@@ -78,23 +78,41 @@ public class FluidCellBlockItem extends BlockItemAugmentable implements IFluidCo
     @Override
     public CompoundTag getOrCreateTankTag(ItemStack container) {
 
-        CompoundTag blockTag = container.getOrCreateTagElement(TAG_BLOCK_ENTITY);
+        CompoundTag blockTag = container.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).copyTag();
         ListTag tanks = blockTag.getList(TAG_TANK_INV, TAG_COMPOUND);
         if (tanks.isEmpty()) {
             CompoundTag tag = new CompoundTag();
             tag.putByte(TAG_TANK, (byte) 0);
-            new FluidStorageCoFH(FluidCellBlockEntity.BASE_CAPACITY).write(tag);
+            new FluidStorageCoFH(FluidCellBlockEntity.BASE_CAPACITY).write(BUILTIN_ACCESS, tag);
             tanks.add(tag);
             blockTag.put(TAG_TANK_INV, tanks);
+            setBlockEntityData(container, TCoreBlockEntities.FLUID_CELL_TILE.get(), blockTag);
         }
         return tanks.getCompound(0);
+    }
+
+    @Override
+    public void saveTankTag(ItemStack container, CompoundTag tag) {
+
+        CompoundTag blockTag = container.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).copyTag();
+        ListTag tanks = blockTag.getList(TAG_TANK_INV, TAG_COMPOUND);
+        if (tanks.isEmpty()) {
+            tanks.add(tag);
+        } else {
+            tanks.set(0, tag);
+        }
+        blockTag.put(TAG_TANK_INV, tanks);
+        setBlockEntityData(container, TCoreBlockEntities.FLUID_CELL_TILE.get(), blockTag);
     }
 
     @Override
     public FluidStack getFluid(ItemStack container) {
 
         CompoundTag tag = getOrCreateTankTag(container);
-        return FluidStack.loadFluidStackFromNBT(tag);
+        if (!tag.contains("id")) {
+            return FluidStack.EMPTY;
+        }
+        return FluidStack.parseOptional(BUILTIN_ACCESS, tag);
     }
 
     @Override
@@ -116,16 +134,20 @@ public class FluidCellBlockItem extends BlockItemAugmentable implements IFluidCo
         if (resource.isEmpty() || !isFluidValid(container, resource)) {
             return 0;
         }
-        FluidStorageCoFH tank = new FluidStorageCoFH(FluidCellBlockEntity.BASE_CAPACITY).setCapacity(getCapacity(container)).read(containerTag);
+        FluidStorageCoFH tank = new FluidStorageCoFH(FluidCellBlockEntity.BASE_CAPACITY).setCapacity(getCapacity(container)).read(BUILTIN_ACCESS, containerTag);
         if (isCreative(container, FLUID)) {
             if (action.execute()) {
-                tank.setFluidStack(new FluidStack(resource, tank.getCapacity()));
-                tank.write(containerTag);
+                tank.setFluidStack(resource.copyWithAmount(tank.getCapacity()));
+                tank.write(BUILTIN_ACCESS, containerTag);
+                saveTankTag(container, containerTag);
             }
             return resource.getAmount();
         }
         int ret = tank.fill(resource, action);
-        tank.write(containerTag);
+        tank.write(BUILTIN_ACCESS, containerTag);
+        if (action.execute()) {
+            saveTankTag(container, containerTag);
+        }
         return ret;
     }
 
@@ -133,12 +155,15 @@ public class FluidCellBlockItem extends BlockItemAugmentable implements IFluidCo
     public FluidStack drain(ItemStack container, int maxDrain, FluidAction action) {
 
         CompoundTag containerTag = getOrCreateTankTag(container);
-        FluidStorageCoFH tank = new FluidStorageCoFH(FluidCellBlockEntity.BASE_CAPACITY).setCapacity(getCapacity(container)).read(containerTag);
+        FluidStorageCoFH tank = new FluidStorageCoFH(FluidCellBlockEntity.BASE_CAPACITY).setCapacity(getCapacity(container)).read(BUILTIN_ACCESS, containerTag);
         if (isCreative(container, FLUID)) {
-            return new FluidStack(tank.getFluidStack(), maxDrain);
+            return tank.getFluidStack().copyWithAmount(maxDrain);
         }
         FluidStack ret = tank.drain(maxDrain, action);
-        tank.write(containerTag);
+        tank.write(BUILTIN_ACCESS, containerTag);
+        if (action.execute()) {
+            saveTankTag(container, containerTag);
+        }
         return ret;
     }
     // endregion
@@ -147,14 +172,15 @@ public class FluidCellBlockItem extends BlockItemAugmentable implements IFluidCo
     @Override
     public void updateAugmentState(ItemStack container, List<ItemStack> augments) {
 
-        container.getOrCreateTag().put(TAG_PROPERTIES, new CompoundTag());
+        CompoundTag properties = new CompoundTag();
         for (ItemStack augment : augments) {
             CompoundTag augmentData = AugmentDataHelper.getAugmentData(augment);
             if (augmentData == null) {
                 continue;
             }
-            setAttributesFromAugment(container, augmentData);
+            setAttributesFromAugment(properties, augmentData);
         }
+        CustomData.update(DataComponents.CUSTOM_DATA, container, tag -> tag.put(TAG_PROPERTIES, properties));
         int fluidExcess = getFluidAmount(container) - getCapacity(container);
         if (fluidExcess > 0) {
             drain(container, fluidExcess, EXECUTE);

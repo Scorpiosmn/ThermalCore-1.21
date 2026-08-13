@@ -7,10 +7,14 @@ import cofh.core.util.control.RedstoneControlModule;
 import cofh.core.util.control.SecurityControlModule;
 import cofh.thermal.core.common.config.ThermalCoreConfig;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -29,7 +33,7 @@ public class LogisticsBlockEntity extends BlockEntityCoFH implements ISecurableT
     @Override
     public ItemStack createItemStackTag(ItemStack stack) {
 
-        CompoundTag nbt = stack.getOrCreateTagElement(TAG_BLOCK_ENTITY);
+        CompoundTag nbt = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).copyTag();
         if (hasSecurity()) {
             securityControl().write(nbt);
         }
@@ -37,25 +41,25 @@ public class LogisticsBlockEntity extends BlockEntityCoFH implements ISecurableT
             redstoneControl().writeSettings(nbt);
         }
         if (!nbt.isEmpty()) {
-            stack.addTagElement(TAG_BLOCK_ENTITY, nbt);
+            BlockItem.setBlockEntityData(stack, getType(), nbt);
         }
         return super.createItemStackTag(stack);
     }
 
     // region NBT
     @Override
-    public void load(CompoundTag nbt) {
+    public void loadAdditional(CompoundTag nbt, HolderLookup.Provider provider) {
 
-        super.load(nbt);
+        super.loadAdditional(nbt, provider);
 
         securityControl.read(nbt);
         redstoneControl.read(nbt);
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt) {
+    public void saveAdditional(CompoundTag nbt, HolderLookup.Provider provider) {
 
-        super.saveAdditional(nbt);
+        super.saveAdditional(nbt, provider);
 
         securityControl.write(nbt);
         redstoneControl.write(nbt);

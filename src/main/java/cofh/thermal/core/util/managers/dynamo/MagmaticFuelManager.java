@@ -25,9 +25,8 @@ public class MagmaticFuelManager extends SingleFluidFuelManager {
     public void refresh(RecipeManager recipeManager) {
 
         clear();
-        var recipes = recipeManager.byType(MAGMATIC_FUEL.get());
-        for (var entry : recipes.entrySet()) {
-            addFuel(entry.getValue().value());
+        for (var recipe : recipeManager.getAllRecipesFor(MAGMATIC_FUEL.get())) {
+            addFuel(recipe.value());
         }
     }
     // endregion

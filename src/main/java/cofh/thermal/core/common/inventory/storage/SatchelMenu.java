@@ -13,11 +13,15 @@ import cofh.lib.util.helpers.MathHelper;
 import cofh.lib.util.helpers.SecurityHelper;
 import cofh.thermal.core.common.item.SatchelItem;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 
+import static cofh.lib.util.constants.NBTTags.TAG_ITEM_INV;
 import static cofh.thermal.core.init.registries.TCoreMenus.SATCHEL_CONTAINER;
 
 public class SatchelMenu extends ContainerMenuCoFH implements ISecurable {
@@ -128,7 +132,11 @@ public class SatchelMenu extends ContainerMenuCoFH implements ISecurable {
     @Override
     public void removed(Player playerIn) {
 
-        itemInventory.write(containerItem.getOrCreateInvTag(containerStack));
+        CompoundTag nbt = containerStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        CompoundTag inventoryTag = nbt.getCompound(TAG_ITEM_INV);
+        itemInventory.write(playerIn.level().registryAccess(), inventoryTag);
+        nbt.put(TAG_ITEM_INV, inventoryTag);
+        containerStack.set(DataComponents.CUSTOM_DATA, CustomData.of(nbt));
         containerItem.onContainerInventoryChanged(containerStack);
         super.removed(playerIn);
     }

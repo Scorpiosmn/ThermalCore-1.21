@@ -78,9 +78,8 @@ public class StirlingFuelManager extends SingleItemFuelManager {
     public void refresh(RecipeManager recipeManager) {
 
         clear();
-        var recipes = recipeManager.byType(STIRLING_FUEL.get());
-        for (var entry : recipes.entrySet()) {
-            addFuel(entry.getValue().value());
+        for (var recipe : recipeManager.getAllRecipesFor(STIRLING_FUEL.get())) {
+            addFuel(recipe.value());
         }
         createConvertedRecipes(recipeManager);
     }
@@ -111,7 +110,7 @@ public class StirlingFuelManager extends SingleItemFuelManager {
 
     protected RecipeHolder<StirlingFuel> convert(ItemStack item, int energy) {
 
-        return new RecipeHolder<>(new ResourceLocation(ID_THERMAL, "stirling_" + getName(item)), new StirlingFuel(energy, singletonList(Ingredient.of(item)), emptyList()));
+        return new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(ID_THERMAL, "stirling_" + getName(item)), new StirlingFuel(energy, singletonList(Ingredient.of(item)), emptyList()));
     }
     // endregion
 }

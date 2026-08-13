@@ -29,25 +29,25 @@ public class ThermalCoreConfig implements IBaseConfig {
 
         keepEnergy = builder
                 .comment("If TRUE, most Thermal Blocks will retain Energy when dropped.\nThis setting does not control ALL blocks.")
-                .define("Blocks Retain Energy", keepEnergy);
+                .define("Blocks Retain Energy", true);
         keepItems = builder
                 .comment("If TRUE, most Thermal Blocks will retain Inventory Contents when dropped.\nThis setting does not control ALL blocks.")
-                .define("Blocks Retain Inventory", keepItems);
+                .define("Blocks Retain Inventory", false);
         keepFluids = builder
                 .comment("If TRUE, most Thermal Blocks will retain Tank Contents when dropped.\nThis setting does not control ALL blocks.")
-                .define("Blocks Retain Tank Contents", keepFluids);
+                .define("Blocks Retain Tank Contents", false);
         keepAugments = builder
                 .comment("If TRUE, Thermal Blocks will retain Augments when dropped.")
-                .define("Blocks Retain Augments", keepAugments);
+                .define("Blocks Retain Augments", true);
         keepRSControl = builder
                 .comment("If TRUE, Thermal Blocks will retain Redstone Control configuration when dropped.")
-                .define("Blocks Retain Redstone Control", keepRSControl);
+                .define("Blocks Retain Redstone Control", true);
         keepSideConfig = builder
                 .comment("If TRUE, Thermal Blocks will retain Side configuration when dropped.")
-                .define("Blocks Retain Side Configuration", keepSideConfig);
+                .define("Blocks Retain Side Configuration", true);
         keepTransferControl = builder
                 .comment("If TRUE, Thermal Blocks will retain Transfer Control configuration when dropped.")
-                .define("Blocks Retain Transfer Control", keepTransferControl);
+                .define("Blocks Retain Transfer Control", true);
 
         builder.pop();
 
@@ -90,17 +90,17 @@ public class ThermalCoreConfig implements IBaseConfig {
 
         boolMobBasalz = builder
                 .comment("If TRUE, the Basalz Mob is enabled.")
-                .define("Basalz", boolMobBasalz);
+                .define("Basalz", true);
         boolMobBlitz = builder
                 .comment("If TRUE, the Blitz Mob is enabled.")
-                .define("Blitz", boolMobBlitz);
+                .define("Blitz", true);
         boolMobBlizz = builder
                 .comment("If TRUE, the Blizz Mob is enabled.")
-                .define("Blizz", boolMobBlizz);
+                .define("Blizz", true);
 
         mobBlitzLightning = builder
                 .comment("If TRUE, the Blitz can occasionally call down lightning bolts.")
-                .define("Blitz Lightning", mobBlitzLightning);
+                .define("Blitz Lightning", true);
 
         builder.pop();
 
@@ -108,13 +108,13 @@ public class ThermalCoreConfig implements IBaseConfig {
 
         defaultReconfigSides = builder
                 .comment("If TRUE, Side Reconfiguration is enabled by default on most augmentable blocks which support it.\nIf FALSE, an augment is required.\nThis setting does not control ALL blocks.")
-                .define("Default Side Reconfiguration", defaultReconfigSides);
+                .define("Default Side Reconfiguration", true);
         defaultRSControl = builder
                 .comment("If TRUE, Redstone Control is enabled by default on most augmentable blocks which support it.\nIf FALSE, an augment is required.\nThis setting does not control ALL blocks.")
-                .define("Default Redstone Control", defaultRSControl);
+                .define("Default Redstone Control", true);
         defaultXPStorage = builder
                 .comment("If TRUE, XP Storage is enabled by default on most augmentable blocks which support it.\nIf FALSE, an augment is required.\nThis setting does not control ALL blocks.")
-                .define("Default XP Storage", defaultXPStorage);
+                .define("Default XP Storage", false);
 
         builder.pop();
 
@@ -122,11 +122,11 @@ public class ThermalCoreConfig implements IBaseConfig {
 
         enableVillagerTrades = builder
                 .comment("If TRUE, trades will be added to various Villagers.")
-                .define("Enable Villager Trades", enableVillagerTrades);
+                .define("Enable Villager Trades", true);
 
         enableWandererTrades = builder
                 .comment("If TRUE, trades will be added to the Wandering Trader.")
-                .define("Enable Wandering Trader Trades", enableWandererTrades);
+                .define("Enable Wandering Trader Trades", true);
 
         builder.pop();
     }

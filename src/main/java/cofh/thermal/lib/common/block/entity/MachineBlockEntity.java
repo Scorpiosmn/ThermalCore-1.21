@@ -16,10 +16,11 @@ import cofh.thermal.lib.util.recipes.MachineProperties;
 import cofh.thermal.lib.util.recipes.internal.IMachineRecipe;
 import cofh.thermal.lib.util.recipes.internal.IRecipeCatalyst;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -27,7 +28,6 @@ import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -243,35 +243,29 @@ public abstract class MachineBlockEntity extends Reconfigurable4WayBlockEntity i
 
         for (int j = 0; j < recipeOutputItems.size(); ++j) {
             ItemStack recipeOutput = recipeOutputItems.get(j);
+            int remaining = recipeOutput.getCount();
 
-            boolean matched = false;
-            for (int i = 0; i < slotOutputs.size(); ++i) {
+            for (int i = 0; i < slotOutputs.size() && remaining > 0; ++i) {
                 if (used[i]) {
                     continue;
                 }
                 ItemStack output = slotOutputs.get(i).getItemStack();
-                if (output.getCount() >= output.getMaxStackSize()) {
+                if (output.isEmpty()) {
                     continue;
                 }
-                if (itemsEqualWithTags(output, recipeOutput)) {
+                int space = output.getMaxStackSize() - output.getCount();
+                if (space > 0 && itemsEqualWithTags(output, recipeOutput)) {
                     used[i] = true;
-                    matched = true;
-                    break;
+                    remaining -= Math.min(remaining, space);
                 }
             }
-            if (!matched) {
-                for (int i = 0; i < slotOutputs.size(); ++i) {
-                    if (used[i]) {
-                        continue;
-                    }
-                    if (slotOutputs.get(i).isEmpty()) {
-                        used[i] = true;
-                        matched = true;
-                        break;
-                    }
+            for (int i = 0; i < slotOutputs.size() && remaining > 0; ++i) {
+                if (!used[i] && slotOutputs.get(i).isEmpty()) {
+                    used[i] = true;
+                    remaining -= Math.min(remaining, recipeOutput.getMaxStackSize());
                 }
             }
-            if (!matched && (j == 0 || !secondaryNullFeature)) {
+            if (remaining > 0 && (j == 0 || !secondaryNullFeature)) {
                 return false;
             }
         }
@@ -359,29 +353,40 @@ public abstract class MachineBlockEntity extends Reconfigurable4WayBlockEntity i
             int outputCount = chance <= BASE_CHANCE ? recipeCount : (int) chance * recipeCount;
 
             if (MathHelper.RANDOM.nextFloat() < chance) {
-                ItemStorageCoFH matchSlot = null;
-                for (ItemStorageCoFH slot : outputSlots()) {
-                    ItemStack output = slot.getItemStack();
-                    if (itemsEqualWithTags(output, recipeOutput) && output.getCount() < output.getMaxStackSize()) {
-                        output.grow(outputCount);
-                        matchSlot = slot;
-                        break;
-                    }
-                }
-                if (matchSlot == null) {
-                    for (ItemStorageCoFH slot : outputSlots()) {
-                        if (slot.isEmpty()) {
-                            slot.setItemStack(cloneStack(recipeOutput, outputCount));
-                            matchSlot = slot;
-                            break;
-                        }
-                    }
-                }
-                if (matchSlot != null && chance > BASE_CHANCE) {
+                int remaining = outputCount;
+                if (chance > BASE_CHANCE) {
                     chance -= (int) chance;
                     if (MathHelper.RANDOM.nextFloat() < chance) {
-                        matchSlot.getItemStack().grow(recipeCount);
+                        remaining += recipeCount;
                     }
+                }
+                // Fill matching slots with available space, splitting the output across slots as needed.
+                for (ItemStorageCoFH slot : outputSlots()) {
+                    if (remaining <= 0) {
+                        break;
+                    }
+                    ItemStack output = slot.getItemStack();
+                    if (output.isEmpty() || !itemsEqualWithTags(output, recipeOutput)) {
+                        continue;
+                    }
+                    int space = output.getMaxStackSize() - output.getCount();
+                    if (space > 0) {
+                        int toAdd = Math.min(remaining, space);
+                        output.grow(toAdd);
+                        remaining -= toAdd;
+                    }
+                }
+                // Use empty slots for any remainder.
+                for (ItemStorageCoFH slot : outputSlots()) {
+                    if (remaining <= 0) {
+                        break;
+                    }
+                    if (!slot.isEmpty()) {
+                        continue;
+                    }
+                    int toAdd = Math.min(remaining, recipeOutput.getMaxStackSize());
+                    slot.setItemStack(cloneStack(recipeOutput, toAdd));
+                    remaining -= toAdd;
                 }
             }
         }
@@ -489,9 +494,9 @@ public abstract class MachineBlockEntity extends Reconfigurable4WayBlockEntity i
 
     // region NBT
     @Override
-    public void load(CompoundTag nbt) {
+    public void loadAdditional(CompoundTag nbt, HolderLookup.Provider provider) {
 
-        super.load(nbt);
+        super.loadAdditional(nbt, provider);
 
         wasActive = nbt.getBoolean(TAG_ACTIVE_PREV);
 
@@ -501,9 +506,9 @@ public abstract class MachineBlockEntity extends Reconfigurable4WayBlockEntity i
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt) {
+    public void saveAdditional(CompoundTag nbt, HolderLookup.Provider provider) {
 
-        super.saveAdditional(nbt);
+        super.saveAdditional(nbt, provider);
 
         nbt.putBoolean(TAG_ACTIVE_PREV, wasActive);
 
@@ -551,9 +556,9 @@ public abstract class MachineBlockEntity extends Reconfigurable4WayBlockEntity i
     }
 
     @Override
-    protected void finalizeAttributes(Map<Enchantment, Integer> enchantmentMap) {
+    protected void finalizeAttributes(ItemEnchantments enchantments) {
 
-        super.finalizeAttributes(enchantmentMap);
+        super.finalizeAttributes(enchantments);
         float baseMod = getAttributeModWithDefault(augmentNBT, TAG_AUGMENT_BASE_MOD, 1.0F);
         float powerMod = getAttributeModWithDefault(augmentNBT, TAG_AUGMENT_MACHINE_POWER, 1.0F);
         float speedMod = getAttributeModWithDefault(augmentNBT, TAG_AUGMENT_MACHINE_SPEED, 1.0F);

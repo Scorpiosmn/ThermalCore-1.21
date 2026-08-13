@@ -2,15 +2,17 @@ package cofh.thermal.core.util.recipes.device;
 
 import cofh.lib.util.recipes.SerializableRecipe;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
-
-import javax.annotation.Nullable;
+import net.minecraft.world.level.storage.loot.LootTable;
 
 import static cofh.lib.util.recipes.RecipeJsonUtils.*;
 import static cofh.thermal.core.init.registries.TCoreRecipeSerializers.FISHER_BOOST_SERIALIZER;
@@ -20,11 +22,11 @@ public class FisherBoost extends SerializableRecipe {
 
     protected final Ingredient ingredient;
 
-    protected final ResourceLocation lootTable;
+    protected final ResourceKey<LootTable> lootTable;
     protected final float outputMod;
     protected final float useChance;
 
-    public FisherBoost(Ingredient inputItem, ResourceLocation lootTable, float outputMod, float useChance) {
+    public FisherBoost(Ingredient inputItem, ResourceKey<LootTable> lootTable, float outputMod, float useChance) {
 
         this.ingredient = inputItem;
         this.lootTable = lootTable;
@@ -50,7 +52,7 @@ public class FisherBoost extends SerializableRecipe {
         return ingredient;
     }
 
-    public ResourceLocation getLootTable() {
+    public ResourceKey<LootTable> getLootTable() {
 
         return lootTable;
     }
@@ -69,18 +71,25 @@ public class FisherBoost extends SerializableRecipe {
     // region SERIALIZER
     public static class Serializer implements RecipeSerializer<FisherBoost> {
 
-        public static final Codec<FisherBoost> CODEC = RecordCodecBuilder.create(builder -> builder.group(
+        public static final MapCodec<FisherBoost> CODEC = RecordCodecBuilder.mapCodec(builder -> builder.group(
                         Ingredient.CODEC_NONEMPTY.fieldOf(INGREDIENT).forGetter(recipe -> recipe.ingredient),
-                        ResourceLocation.CODEC.optionalFieldOf(LOOT_TABLE, BuiltInLootTables.FISHING_FISH).forGetter(recipe -> recipe.lootTable),
+                        ResourceKey.codec(Registries.LOOT_TABLE).optionalFieldOf(LOOT_TABLE, BuiltInLootTables.FISHING_FISH).forGetter(recipe -> recipe.lootTable),
                         Codec.FLOAT.optionalFieldOf(OUTPUT_MOD, 1.0F).forGetter(recipe -> recipe.outputMod),
                         Codec.FLOAT.optionalFieldOf(USE_CHANCE, 1.0F).forGetter(recipe -> recipe.useChance)
                 ).apply(builder, FisherBoost::new)
         );
+        public static final StreamCodec<RegistryFriendlyByteBuf, FisherBoost> STREAM_CODEC = StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
 
         @Override
-        public Codec<FisherBoost> codec() {
+        public MapCodec<FisherBoost> codec() {
 
             return CODEC;
+        }
+
+        @Override
+        public StreamCodec<RegistryFriendlyByteBuf, FisherBoost> streamCodec() {
+
+            return STREAM_CODEC;
         }
 
         //        @Override
@@ -109,25 +118,22 @@ public class FisherBoost extends SerializableRecipe {
         //            return new FisherBoost(ingredient, lootTable, outputMod, useChance);
         //        }
 
-        @Nullable
-        @Override
-        public FisherBoost fromNetwork(FriendlyByteBuf buffer) {
+        private static FisherBoost fromNetwork(RegistryFriendlyByteBuf buffer) {
 
-            Ingredient ingredient = Ingredient.fromNetwork(buffer);
+            Ingredient ingredient = Ingredient.CONTENTS_STREAM_CODEC.decode(buffer);
 
-            ResourceLocation lootTable = buffer.readResourceLocation();
+            ResourceKey<LootTable> lootTable = ResourceKey.streamCodec(Registries.LOOT_TABLE).decode(buffer);
             float outputMod = buffer.readFloat();
             float useChance = buffer.readFloat();
 
             return new FisherBoost(ingredient, lootTable, outputMod, useChance);
         }
 
-        @Override
-        public void toNetwork(FriendlyByteBuf buffer, FisherBoost recipe) {
+        private static void toNetwork(RegistryFriendlyByteBuf buffer, FisherBoost recipe) {
 
-            recipe.ingredient.toNetwork(buffer);
+            Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, recipe.ingredient);
 
-            buffer.writeResourceLocation(recipe.lootTable);
+            ResourceKey.streamCodec(Registries.LOOT_TABLE).encode(buffer, recipe.lootTable);
             buffer.writeFloat(recipe.outputMod);
             buffer.writeFloat(recipe.useChance);
         }

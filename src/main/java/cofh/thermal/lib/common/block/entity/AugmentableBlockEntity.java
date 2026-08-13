@@ -29,9 +29,14 @@ import cofh.thermal.core.common.config.ThermalClientConfig;
 import cofh.thermal.core.common.config.ThermalCoreConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -40,9 +45,12 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -58,7 +66,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -90,7 +97,7 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
     protected RedstoneControlModule redstoneControl = new RedstoneControlModule(this);
 
     protected List<ItemStorageCoFH> augments = Collections.emptyList();
-    protected ListTag enchantments = new ListTag();
+    protected ItemEnchantments enchantments = ItemEnchantments.EMPTY;
 
     public boolean isActive;
     protected FluidStack renderFluid = FluidStack.EMPTY;
@@ -171,7 +178,7 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
 
         super.onPlacedBy(worldIn, pos, state, placer, stack);
 
-        enchantments = stack.getEnchantmentTags();
+        enchantments = stack.getEnchantments();
 
         updateAugmentState();
 
@@ -202,23 +209,19 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
     @Override
     public ItemStack createItemStackTag(ItemStack stack) {
 
-        CompoundTag nbt = stack.getOrCreateTagElement(TAG_BLOCK_ENTITY);
+        CompoundTag nbt = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).copyTag();
         if (keepEnergy()) {
             getEnergyStorage().writeWithParams(nbt);
         }
         if (keepItems()) {
-            getItemInv().writeSlotsToNBT(nbt, 0, invSize() - augSize());
+            getItemInv().writeSlotsToNBT(Utils.BUILTIN_ACCESS, nbt, 0, invSize() - augSize());
         }
         if (ThermalCoreConfig.keepAugments.get() && augSize() > 0) {
-            getItemInv().writeSlotsToNBTUnordered(nbt, TAG_AUGMENTS, invSize() - augSize());
-            if (stack.getItem() instanceof IAugmentableItem augmentableItem) {
-                List<ItemStack> items = getAugmentsAsList();
-                augmentableItem.updateAugmentState(stack, items);
-            }
-            filter.write(nbt);
+            getItemInv().writeSlotsToNBTUnordered(Utils.BUILTIN_ACCESS, nbt, TAG_AUGMENTS, invSize() - augSize());
+            filter.write(Utils.BUILTIN_ACCESS, nbt);
         }
         if (keepFluids()) {
-            getTankInv().write(nbt);
+            getTankInv().write(Utils.BUILTIN_ACCESS, nbt);
         }
         // TODO: Keep XP?
 
@@ -235,10 +238,14 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
             securityControl().write(nbt);
         }
         if (!nbt.isEmpty()) {
-            stack.addTagElement(TAG_BLOCK_ENTITY, nbt);
+            BlockItem.setBlockEntityData(stack, getType(), nbt);
+        }
+        if (ThermalCoreConfig.keepAugments.get() && augSize() > 0 && stack.getItem() instanceof IAugmentableItem augmentableItem) {
+            List<ItemStack> items = getAugmentsAsList();
+            augmentableItem.updateAugmentState(stack, items);
         }
         if (!enchantments.isEmpty()) {
-            stack.getOrCreateTag().put(TAG_ENCHANTMENTS, enchantments);
+            stack.set(DataComponents.ENCHANTMENTS, enchantments);
         }
         return super.createItemStackTag(stack);
     }
@@ -400,7 +407,7 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
         securityControl.writeToBuffer(buffer);
         redstoneControl.writeToBuffer(buffer);
 
-        buffer.writeFluidStack(renderFluid);
+        FluidStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buffer, renderFluid);
 
         return buffer;
     }
@@ -413,7 +420,7 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
         securityControl.readFromBuffer(buffer);
         redstoneControl.readFromBuffer(buffer);
 
-        renderFluid = buffer.readFluidStack();
+        renderFluid = FluidStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buffer);
     }
 
     // GUI
@@ -423,13 +430,13 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
         super.getGuiPacket(buffer);
 
         buffer.writeBoolean(isActive);
-        buffer.writeFluidStack(renderFluid);
+        FluidStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buffer, renderFluid);
 
         energyStorage.writeToBuffer(buffer);
         xpStorage.writeToBuffer(buffer);
 
         for (int i = 0; i < tankInv.getTanks(); ++i) {
-            buffer.writeFluidStack(tankInv.get(i));
+            FluidStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buffer, tankInv.get(i));
         }
         return buffer;
     }
@@ -440,13 +447,13 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
         super.handleGuiPacket(buffer);
 
         isActive = buffer.readBoolean();
-        renderFluid = buffer.readFluidStack();
+        renderFluid = FluidStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buffer);
 
         energyStorage.readFromBuffer(buffer);
         xpStorage.readFromBuffer(buffer);
 
         for (int i = 0; i < tankInv.getTanks(); ++i) {
-            tankInv.set(i, buffer.readFluidStack());
+            tankInv.set(i, FluidStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buffer));
         }
     }
 
@@ -476,7 +483,7 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
         super.getStatePacket(buffer);
 
         buffer.writeBoolean(isActive);
-        buffer.writeFluidStack(renderFluid);
+        FluidStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buffer, renderFluid);
 
         return buffer;
     }
@@ -489,7 +496,7 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
         boolean prevActive = isActive;
 
         isActive = buffer.readBoolean();
-        renderFluid = buffer.readFluidStack();
+        renderFluid = FluidStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buffer);
 
         if (ThermalClientConfig.blockAmbientSounds.get() && isActive && !prevActive) {
             SoundHelper.playSound(getSound());
@@ -499,52 +506,60 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
 
     // region NBT
     @Override
-    public void load(CompoundTag nbt) {
+    public void loadAdditional(CompoundTag nbt, HolderLookup.Provider provider) {
 
-        super.load(nbt);
+        super.loadAdditional(nbt, provider);
 
         isActive = nbt.getBoolean(TAG_ACTIVE);
 
-        enchantments = nbt.getList(TAG_ENCHANTMENTS, TAG_COMPOUND);
+        if (nbt.contains(TAG_ENCHANTMENTS)) {
+            enchantments = readEnchantments(nbt, provider);
+        } else {
+            enchantments = ItemEnchantments.EMPTY;
+        }
 
-        inventory.read(nbt);
+        inventory.read(provider, nbt);
 
         if (nbt.contains(TAG_AUGMENTS)) {
-            inventory.readSlotsUnordered(nbt.getList(TAG_AUGMENTS, TAG_COMPOUND), invSize() - augSize());
+            inventory.readSlotsUnordered(provider, nbt.getList(TAG_AUGMENTS, TAG_COMPOUND), invSize() - augSize());
         }
         updateAugmentState();
 
-        tankInv.read(nbt);
+        tankInv.read(provider, nbt);
         energyStorage.read(nbt);
         xpStorage.read(nbt);
-        filter.read(nbt);
+        filter.read(provider, nbt);
 
         securityControl.read(nbt);
         redstoneControl.read(nbt);
 
-        renderFluid = FluidStack.loadFluidStackFromNBT(nbt.getCompound(TAG_RENDER_FLUID));
+        renderFluid = FluidStack.parseOptional(provider, nbt.getCompound(TAG_RENDER_FLUID));
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt) {
+    public void saveAdditional(CompoundTag nbt, HolderLookup.Provider provider) {
 
-        super.saveAdditional(nbt);
+        super.saveAdditional(nbt, provider);
 
         nbt.putBoolean(TAG_ACTIVE, isActive);
 
-        nbt.put(TAG_ENCHANTMENTS, enchantments);
+        if (!enchantments.isEmpty()) {
+            ItemEnchantments.CODEC.encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), enchantments).result().ifPresent(tag -> nbt.put(TAG_ENCHANTMENTS, tag));
+        } else {
+            nbt.remove(TAG_ENCHANTMENTS);
+        }
 
-        inventory.write(nbt);
-        tankInv.write(nbt);
+        inventory.write(provider, nbt);
+        tankInv.write(provider, nbt);
         getEnergyStorage().write(nbt);
         getXpStorage().write(nbt);
-        filter.write(nbt);
+        filter.write(provider, nbt);
 
         securityControl.write(nbt);
         redstoneControl.write(nbt);
 
         if (!renderFluid.isEmpty()) {
-            nbt.put(TAG_RENDER_FLUID, renderFluid.writeToNBT(new CompoundTag()));
+            nbt.put(TAG_RENDER_FLUID, renderFluid.save(provider, new CompoundTag()));
         }
     }
     // endregion
@@ -600,7 +615,7 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
             }
             setAttributesFromAugment(augmentData);
         }
-        finalizeAttributes(EnchantmentHelper.deserializeEnchantments(enchantments));
+        finalizeAttributes(enchantments);
         augmentNBT = null;
     }
 
@@ -644,9 +659,9 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
         // creativeSlots |= getAttributeMod(augmentData, TAG_AUGMENT_ITEM_CREATIVE) > 0;
     }
 
-    protected void finalizeAttributes(Map<Enchantment, Integer> enchantmentMap) {
+    protected void finalizeAttributes(ItemEnchantments enchantments) {
 
-        float holdingMod = getHoldingMod(enchantmentMap);
+        float holdingMod = getHoldingMod(enchantments);
         float baseMod = getAttributeModWithDefault(augmentNBT, TAG_AUGMENT_BASE_MOD, 1.0F);
 
         float energyStorageMod = holdingMod * baseMod * getAttributeModWithDefault(augmentNBT, TAG_AUGMENT_RF_STORAGE, 1.0F);
@@ -672,7 +687,7 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
             spawnXpOrbs(level, storedXp - xpStorage.getStored(), Vec3.atBottomCenterOf(worldPosition));
         }
 
-        CompoundTag filterNBT = filter.write(new CompoundTag());
+        CompoundTag filterNBT = filter.write(level != null ? level.registryAccess() : Utils.BUILTIN_ACCESS, new CompoundTag());
         filter = FilterRegistry.getFilter(getAttributeModString(augmentNBT, TAG_FILTER_TYPE), filterNBT, this);
     }
 
@@ -691,10 +706,31 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
         return ThermalCoreConfig.defaultXPStorage.get();
     }
 
-    protected float getHoldingMod(Map<Enchantment, Integer> enchantmentMap) {
+    protected float getHoldingMod(ItemEnchantments enchantments) {
 
-        int holding = enchantmentMap.getOrDefault(HOLDING.get(), 0);
-        return 1 + holding / 2F;
+        for (var entry : enchantments.entrySet()) {
+            if (entry.getKey().is(HOLDING)) {
+                return 1 + entry.getIntValue() / 2F;
+            }
+        }
+        return 1.0F;
+    }
+
+    protected ItemEnchantments readEnchantments(CompoundTag nbt, HolderLookup.Provider provider) {
+
+        if (nbt.get(TAG_ENCHANTMENTS) instanceof ListTag list) {
+            ItemEnchantments.Mutable enchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+            var registry = provider.lookupOrThrow(Registries.ENCHANTMENT);
+            for (int i = 0; i < list.size(); ++i) {
+                CompoundTag enchantmentTag = list.getCompound(i);
+                ResourceLocation id = ResourceLocation.tryParse(enchantmentTag.getString("id"));
+                if (id != null) {
+                    registry.get(ResourceKey.create(Registries.ENCHANTMENT, id)).ifPresent(enchantment -> enchantments.set(enchantment, enchantmentTag.getShort("lvl")));
+                }
+            }
+            return enchantments.toImmutable();
+        }
+        return ItemEnchantments.CODEC.parse(provider.createSerializationContext(NbtOps.INSTANCE), nbt.get(TAG_ENCHANTMENTS)).result().orElse(ItemEnchantments.EMPTY);
     }
     // endregion
 

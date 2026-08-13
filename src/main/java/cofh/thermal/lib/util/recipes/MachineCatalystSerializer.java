@@ -1,24 +1,25 @@
 package cofh.thermal.lib.util.recipes;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
-
-import javax.annotation.Nullable;
 
 import static cofh.lib.util.recipes.RecipeJsonUtils.*;
 
 public class MachineCatalystSerializer<T extends ThermalCatalyst> implements RecipeSerializer<T> {
 
     protected final IFactory<T> factory;
-    protected final Codec<T> codec;
+    protected final MapCodec<T> codec;
+    protected final StreamCodec<RegistryFriendlyByteBuf, T> streamCodec;
 
     public MachineCatalystSerializer(IFactory<T> factory) {
 
         this.factory = factory;
-        this.codec = RecordCodecBuilder.create(builder -> builder.group(
+        this.codec = RecordCodecBuilder.mapCodec(builder -> builder.group(
                         Ingredient.CODEC_NONEMPTY.fieldOf(INGREDIENT).forGetter(recipe -> recipe.ingredient),
                         Codec.FLOAT.optionalFieldOf(PRIMARY_MOD, 1.0F).forGetter(recipe -> recipe.primaryMod),
                         Codec.FLOAT.optionalFieldOf(SECONDARY_MOD, 1.0F).forGetter(recipe -> recipe.secondaryMod),
@@ -27,12 +28,19 @@ public class MachineCatalystSerializer<T extends ThermalCatalyst> implements Rec
                         Codec.FLOAT.optionalFieldOf(USE_CHANCE, 1.0F).forGetter(recipe -> recipe.useChance)
                 ).apply(builder, factory::create)
         );
+        this.streamCodec = StreamCodec.of(this::toNetwork, this::fromNetwork);
     }
 
     @Override
-    public Codec<T> codec() {
+    public MapCodec<T> codec() {
 
         return codec;
+    }
+
+    @Override
+    public StreamCodec<RegistryFriendlyByteBuf, T> streamCodec() {
+
+        return streamCodec;
     }
 
     //    @Override
@@ -67,11 +75,9 @@ public class MachineCatalystSerializer<T extends ThermalCatalyst> implements Rec
     //        return factory.create(ingredient, primaryMod, secondaryMod, energyMod, minChance, useChance);
     //    }
 
-    @Nullable
-    @Override
-    public T fromNetwork(FriendlyByteBuf buffer) {
+    private T fromNetwork(RegistryFriendlyByteBuf buffer) {
 
-        Ingredient ingredient = Ingredient.fromNetwork(buffer);
+        Ingredient ingredient = Ingredient.CONTENTS_STREAM_CODEC.decode(buffer);
 
         float primaryMod = buffer.readFloat();
         float secondaryMod = buffer.readFloat();
@@ -82,10 +88,9 @@ public class MachineCatalystSerializer<T extends ThermalCatalyst> implements Rec
         return factory.create(ingredient, primaryMod, secondaryMod, energyMod, minChance, useChance);
     }
 
-    @Override
-    public void toNetwork(FriendlyByteBuf buffer, T recipe) {
+    private void toNetwork(RegistryFriendlyByteBuf buffer, T recipe) {
 
-        recipe.ingredient.toNetwork(buffer);
+        Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, recipe.ingredient);
 
         buffer.writeFloat(recipe.primaryMod);
         buffer.writeFloat(recipe.secondaryMod);

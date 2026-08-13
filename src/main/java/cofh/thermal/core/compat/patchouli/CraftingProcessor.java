@@ -23,7 +23,7 @@ public class CraftingProcessor implements IComponentProcessor {
 
         if (!variables.has("recipe"))
             return;
-        ResourceLocation recipeId = new ResourceLocation(variables.get("recipe").asString());
+        ResourceLocation recipeId = ResourceLocation.parse(variables.get("recipe", level.registryAccess()).asString());
         Optional<? extends RecipeHolder<?>> recipe = level.getRecipeManager().byKey(recipeId);
         if (recipe.isPresent() && recipe.get().value() instanceof CraftingRecipe) {
             this.recipe = (CraftingRecipe) recipe.get().value();
@@ -39,11 +39,11 @@ public class CraftingProcessor implements IComponentProcessor {
             return null;
         }
         if (key.equals("out")) {
-            return IVariable.from(recipe.getResultItem(level.registryAccess()));
+            return IVariable.from(recipe.getResultItem(level.registryAccess()), level.registryAccess());
         } else if (key.startsWith("in")) {
             int index = Integer.parseInt(key.substring(key.length() - 1));
             if (recipe instanceof ShapedRecipe) {
-                int width = ((ShapedRecipe) recipe).getRecipeWidth();
+                int width = ((ShapedRecipe) recipe).getWidth();
                 if (width < 3) {
                     if (index % 3 >= width) {
                         return null;
@@ -54,9 +54,9 @@ public class CraftingProcessor implements IComponentProcessor {
             if (recipe.getIngredients().size() <= index) {
                 return null;
             }
-            return IVariable.wrapList(Arrays.stream(recipe.getIngredients().get(index).getItems()).map(IVariable::from).collect(Collectors.toList()));
+            return IVariable.wrapList(Arrays.stream(recipe.getIngredients().get(index).getItems()).map(stack -> IVariable.from(stack, level.registryAccess())).collect(Collectors.toList()), level.registryAccess());
         } else if (key.equals("title")) {
-            return IVariable.from(recipe.getResultItem(level.registryAccess()).getHoverName());
+            return IVariable.from(recipe.getResultItem(level.registryAccess()).getHoverName(), level.registryAccess());
         } else if (key.equals("show")) {
             return IVariable.wrap(true);
         }

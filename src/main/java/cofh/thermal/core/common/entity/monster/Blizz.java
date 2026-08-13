@@ -25,10 +25,12 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.FrostWalkerEnchantment;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -45,6 +47,8 @@ public class Blizz extends Monster {
 
     private static final EntityDataAccessor<Byte> ANGRY = SynchedEntityData.defineId(Blizz.class, EntityDataSerializers.BYTE);
 
+    protected BlockPos lastFreezePos;
+
     public static boolean canSpawn(EntityType<Blizz> entityType, ServerLevelAccessor world, MobSpawnType reason, BlockPos pos, RandomSource rand) {
 
         return getFlag(FLAG_MOB_BLIZZ).get() && Monster.checkMonsterSpawnRules(entityType, world, reason, pos, rand);
@@ -57,7 +61,7 @@ public class Blizz extends Monster {
         this.moveControl = new FlyingMoveControl(this, 20, true);
         this.navigation = new FlyingPathNavigation(this, world);
         //this.setPathfindingMalus(PathNodeType.WATER, -1.0F);
-        this.setPathfindingMalus(BlockPathTypes.LAVA, -1.0F);
+        this.setPathfindingMalus(PathType.LAVA, -1.0F);
 
         this.xpReward = 10;
     }
@@ -86,10 +90,10 @@ public class Blizz extends Monster {
     }
 
     @Override
-    protected void defineSynchedData() {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
 
-        super.defineSynchedData();
-        this.entityData.define(ANGRY, (byte) 0);
+        super.defineSynchedData(builder);
+        builder.define(ANGRY, (byte) 0);
     }
 
     @Override
@@ -116,6 +120,11 @@ public class Blizz extends Monster {
         if (!this.onGround() && this.getDeltaMovement().y < 0.0D) {
             this.setDeltaMovement(this.getDeltaMovement().multiply(1.0D, 0.6D, 1.0D));
         }
+        BlockPos freezePos = blockPosition();
+        if (!freezePos.equals(lastFreezePos)) {
+            freezeWater(level, freezePos, 1);
+            lastFreezePos = freezePos.immutable();
+        }
         if (this.level.isClientSide) {
             //            if (this.rand.nextInt(256) == 0 && !this.isSilent()) {
             //                this.world.playSound(this.getPosX() + 0.5D, this.getPosY() + 0.5D, this.getPosZ() + 0.5D, SOUND_BLIZZ_ROAM, this.getSoundCategory(), 0.5F + 0.25F * this.rand.nextFloat(), this.rand.nextFloat() * 0.7F + 0.3F, true);
@@ -127,15 +136,17 @@ public class Blizz extends Monster {
         super.aiStep();
     }
 
-    @Override
-    protected void onChangedBlock(BlockPos pos) {
+    protected static void freezeWater(Level level, BlockPos pos, int radius) {
 
-        FrostWalkerEnchantment.onEntityMoved(this, level, pos, 1);
-
-        if (this.shouldRemoveSoulSpeed(this.getBlockStateOn())) {
-            this.removeSoulSpeed();
+        if (!level.isClientSide) {
+            BlockState frostedIce = Blocks.FROSTED_ICE.defaultBlockState();
+            for (BlockPos freezePos : BlockPos.betweenClosed(pos.offset(-radius, -1, -radius), pos.offset(radius, -1, radius))) {
+                if (level.getBlockState(freezePos).is(Blocks.WATER) && level.getBlockState(freezePos.above()).isAir() && frostedIce.canSurvive(level, freezePos) && level.isUnobstructed(frostedIce, freezePos, CollisionContext.empty())) {
+                    level.setBlockAndUpdate(freezePos, frostedIce);
+                    level.scheduleTick(freezePos, Blocks.FROSTED_ICE, level.getRandom().nextInt(60) + 60);
+                }
+            }
         }
-        this.tryAddSoulSpeed();
     }
 
     @Override
@@ -147,7 +158,7 @@ public class Blizz extends Monster {
     @Override
     public boolean canBeAffected(MobEffectInstance effect) {
 
-        return super.canBeAffected(effect) && !effect.getEffect().equals(CHILLED.get());
+        return super.canBeAffected(effect) && !effect.getEffect().equals(CHILLED);
     }
 
     @Override

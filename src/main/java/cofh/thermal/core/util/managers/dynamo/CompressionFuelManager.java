@@ -25,9 +25,8 @@ public class CompressionFuelManager extends SingleFluidFuelManager {
     public void refresh(RecipeManager recipeManager) {
 
         clear();
-        var recipes = recipeManager.byType(COMPRESSION_FUEL.get());
-        for (var entry : recipes.entrySet()) {
-            addFuel(entry.getValue().value());
+        for (var recipe : recipeManager.getAllRecipesFor(COMPRESSION_FUEL.get())) {
+            addFuel(recipe.value());
         }
     }
     // endregion

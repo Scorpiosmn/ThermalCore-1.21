@@ -1,22 +1,20 @@
 package cofh.thermal.core.client.renderer.model;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.neoforged.neoforge.client.model.IDynamicBakedModel;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 // TODO: Adjust this when Dynamos have more model needs
 public class DynamoBakedModel extends UnderlayBakedModel implements IDynamicBakedModel {
 
-    private static final Int2ObjectMap<BakedQuad[]> COIL_QUAD_CACHE = new Int2ObjectOpenHashMap<>();
+    private static final Map<Integer, BakedQuad[]> COIL_QUAD_CACHE = new ConcurrentHashMap<>();
 
-    private static final Int2ObjectMap<BakedQuad[]> ITEM_QUAD_CACHE = new Int2ObjectOpenHashMap<>();
-    private static final Map<List<Integer>, BakedModel> MODEL_CACHE = new Object2ObjectOpenHashMap<>();
+    private static final Map<Integer, BakedQuad[]> ITEM_QUAD_CACHE = new ConcurrentHashMap<>();
+    private static final Map<List<Integer>, BakedModel> MODEL_CACHE = new ConcurrentHashMap<>();
 
     public static void clearCache() {
 

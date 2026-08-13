@@ -7,10 +7,8 @@ import cofh.lib.api.item.IFluidContainerItem;
 import cofh.lib.client.renderer.block.model.RetexturedBakedQuad;
 import cofh.lib.util.crafting.ComparableItemStack;
 import cofh.lib.util.helpers.MathHelper;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -23,6 +21,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.IDynamicBakedModel;
 import net.neoforged.neoforge.client.model.data.ModelData;
@@ -34,6 +33,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static cofh.lib.api.ContainerType.FLUID;
 import static cofh.lib.util.constants.NBTTags.*;
@@ -44,12 +44,12 @@ import static net.minecraft.nbt.Tag.TAG_COMPOUND;
 
 public class FluidCellBakedModel extends UnderlayBakedModel implements IDynamicBakedModel {
 
-    private static final Map<List<Integer>, BakedQuad> FACE_QUAD_CACHE = new Object2ObjectOpenHashMap<>();
-    private static final Int2ObjectMap<BakedQuad[]> SIDE_QUAD_CACHE = new Int2ObjectOpenHashMap<>();
+    private static final Map<List<Integer>, BakedQuad> FACE_QUAD_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Integer, BakedQuad[]> SIDE_QUAD_CACHE = new ConcurrentHashMap<>();
 
-    private static final Int2ObjectMap<BakedQuad[]> ITEM_UNDERLAY_QUAD_CACHE = new Int2ObjectOpenHashMap<>();
-    private static final Int2ObjectMap<BakedQuad[]> ITEM_QUAD_CACHE = new Int2ObjectOpenHashMap<>();
-    private static final Map<List<Integer>, BakedModel> MODEL_CACHE = new Object2ObjectOpenHashMap<>();
+    private static final Map<Integer, BakedQuad[]> ITEM_UNDERLAY_QUAD_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Integer, BakedQuad[]> ITEM_QUAD_CACHE = new ConcurrentHashMap<>();
+    private static final Map<List<Integer>, BakedModel> MODEL_CACHE = new ConcurrentHashMap<>();
 
     public static void clearCache() {
 
@@ -87,11 +87,8 @@ public class FluidCellBakedModel extends UnderlayBakedModel implements IDynamicB
                 // This shouldn't happen, but playing it safe.
                 return quads;
             }
-            BakedQuad faceQuad = FACE_QUAD_CACHE.get(Arrays.asList(face.get3DDataValue(), level));
-            if (faceQuad == null) {
-                faceQuad = new RetexturedBakedQuad(quads.get(1), getLevelTexture(level));
-                FACE_QUAD_CACHE.put(Arrays.asList(face.get3DDataValue(), level), faceQuad);
-            }
+            BakedQuad faceQuad = FACE_QUAD_CACHE.computeIfAbsent(Arrays.asList(face.get3DDataValue(), level),
+                    k -> new RetexturedBakedQuad(quads.get(1), getLevelTexture(level)));
             quads.add(faceQuad);
         }
 
@@ -103,15 +100,18 @@ public class FluidCellBakedModel extends UnderlayBakedModel implements IDynamicB
         }
 
         int configHash = Arrays.hashCode(sideConfigRaw);
-        BakedQuad[] cachedSideQuads = SIDE_QUAD_CACHE.get(configHash);
-        if (cachedSideQuads == null || cachedSideQuads.length < 6) {
-            cachedSideQuads = new BakedQuad[6];
+        BakedQuad[] cachedSideQuads = SIDE_QUAD_CACHE.computeIfAbsent(configHash, k -> new BakedQuad[6]);
+        BakedQuad sideQuad = cachedSideQuads[sideIndex];
+        if (sideQuad == null) {
+            synchronized (cachedSideQuads) {
+                sideQuad = cachedSideQuads[sideIndex];
+                if (sideQuad == null) {
+                    sideQuad = new RetexturedBakedQuad(baseQuad, getConfigTexture(sideConfigRaw[sideIndex]));
+                    cachedSideQuads[sideIndex] = sideQuad;
+                }
+            }
         }
-        if (cachedSideQuads[sideIndex] == null) {
-            cachedSideQuads[sideIndex] = new RetexturedBakedQuad(baseQuad, getConfigTexture(sideConfigRaw[sideIndex]));
-            SIDE_QUAD_CACHE.put(configHash, cachedSideQuads);
-        }
-        quads.add(cachedSideQuads[sideIndex]);
+        quads.add(sideQuad);
 
         // FLUID
         return super.addUnderlayQuads(quads, state, side, rand, extraData, renderType);
@@ -129,13 +129,13 @@ public class FluidCellBakedModel extends UnderlayBakedModel implements IDynamicB
         @Override
         public BakedModel resolve(BakedModel model, ItemStack stack, @Nullable ClientLevel worldIn, @Nullable LivingEntity entityIn, int seed) {
 
-            CompoundTag tag = stack.getTagElement(TAG_BLOCK_ENTITY);
+            CompoundTag tag = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).copyTag();
             byte[] sideConfigRaw = getSideConfigRaw(tag);
             int itemHash = new ComparableItemStack(stack).hashCode();
             int level = getLevel(stack);
             int configHash = Arrays.hashCode(sideConfigRaw);
 
-            FluidStack fluid = getFluid(tag);
+            FluidStack fluid = getFluid(tag, worldIn);
             int fluidHash = fluid.isEmpty() ? 0 : FluidHelper.fluidHashcode(fluid);
 
             BakedModel ret = MODEL_CACHE.get(Arrays.asList(itemHash, level, configHash, fluidHash));
@@ -147,19 +147,19 @@ public class FluidCellBakedModel extends UnderlayBakedModel implements IDynamicB
 
                 // FLUID
                 if (!fluid.isEmpty()) {
-                    BakedQuad[] cachedUnderlayQuads = ITEM_UNDERLAY_QUAD_CACHE.get(FluidHelper.fluidHashcode(fluid));
-                    if (cachedUnderlayQuads == null || cachedUnderlayQuads.length < 6) {
-                        cachedUnderlayQuads = new BakedQuad[6];
-                        TextureAtlasSprite fluidTexture = RenderHelper.getFluidTexture(fluid);
-                        int fluidColor = FluidHelper.color(fluid);
+                    BakedQuad[] cachedUnderlayQuads = ITEM_UNDERLAY_QUAD_CACHE.computeIfAbsent(FluidHelper.fluidHashcode(fluid), k -> new BakedQuad[6]);
+                    synchronized (cachedUnderlayQuads) {
+                        if (cachedUnderlayQuads[0] == null) {
+                            TextureAtlasSprite fluidTexture = RenderHelper.getFluidTexture(fluid);
+                            int fluidColor = FluidHelper.color(fluid);
 
-                        cachedUnderlayQuads[0] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(DOWN).get(0), fluidColor), fluidTexture);
-                        cachedUnderlayQuads[1] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(UP).get(0), fluidColor), fluidTexture);
-                        cachedUnderlayQuads[2] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(NORTH).get(0), fluidColor), fluidTexture);
-                        cachedUnderlayQuads[3] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(SOUTH).get(0), fluidColor), fluidTexture);
-                        cachedUnderlayQuads[4] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(WEST).get(0), fluidColor), fluidTexture);
-                        cachedUnderlayQuads[5] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(EAST).get(0), fluidColor), fluidTexture);
-                        ITEM_UNDERLAY_QUAD_CACHE.put(fluidHash, cachedUnderlayQuads);
+                            cachedUnderlayQuads[0] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(DOWN).get(0), fluidColor), fluidTexture);
+                            cachedUnderlayQuads[1] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(UP).get(0), fluidColor), fluidTexture);
+                            cachedUnderlayQuads[2] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(NORTH).get(0), fluidColor), fluidTexture);
+                            cachedUnderlayQuads[3] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(SOUTH).get(0), fluidColor), fluidTexture);
+                            cachedUnderlayQuads[4] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(WEST).get(0), fluidColor), fluidTexture);
+                            cachedUnderlayQuads[5] = new RetexturedBakedQuad(RenderHelper.mulColor(builder.getQuads(EAST).get(0), fluidColor), fluidTexture);
+                        }
                     }
                     builder.addUnderlayQuad(DOWN, cachedUnderlayQuads[0]);
                     builder.addUnderlayQuad(UP, cachedUnderlayQuads[1]);
@@ -170,17 +170,16 @@ public class FluidCellBakedModel extends UnderlayBakedModel implements IDynamicB
                 }
 
                 // SIDES
-                BakedQuad[] cachedQuads = ITEM_QUAD_CACHE.get(configHash);
-                if (cachedQuads == null || cachedQuads.length < 6) {
-                    cachedQuads = new BakedQuad[6];
-
-                    cachedQuads[0] = new RetexturedBakedQuad(builder.getQuads(DOWN).get(0), getConfigTexture(sideConfigRaw[0]));
-                    cachedQuads[1] = new RetexturedBakedQuad(builder.getQuads(UP).get(0), getConfigTexture(sideConfigRaw[1]));
-                    cachedQuads[2] = new RetexturedBakedQuad(builder.getQuads(NORTH).get(0), getConfigTexture(sideConfigRaw[2]));
-                    cachedQuads[3] = new RetexturedBakedQuad(builder.getQuads(SOUTH).get(0), getConfigTexture(sideConfigRaw[3]));
-                    cachedQuads[4] = new RetexturedBakedQuad(builder.getQuads(WEST).get(0), getConfigTexture(sideConfigRaw[4]));
-                    cachedQuads[5] = new RetexturedBakedQuad(builder.getQuads(EAST).get(0), getConfigTexture(sideConfigRaw[5]));
-                    ITEM_QUAD_CACHE.put(configHash, cachedQuads);
+                BakedQuad[] cachedQuads = ITEM_QUAD_CACHE.computeIfAbsent(configHash, k -> new BakedQuad[6]);
+                synchronized (cachedQuads) {
+                    if (cachedQuads[0] == null) {
+                        cachedQuads[0] = new RetexturedBakedQuad(builder.getQuads(DOWN).get(0), getConfigTexture(sideConfigRaw[0]));
+                        cachedQuads[1] = new RetexturedBakedQuad(builder.getQuads(UP).get(0), getConfigTexture(sideConfigRaw[1]));
+                        cachedQuads[2] = new RetexturedBakedQuad(builder.getQuads(NORTH).get(0), getConfigTexture(sideConfigRaw[2]));
+                        cachedQuads[3] = new RetexturedBakedQuad(builder.getQuads(SOUTH).get(0), getConfigTexture(sideConfigRaw[3]));
+                        cachedQuads[4] = new RetexturedBakedQuad(builder.getQuads(WEST).get(0), getConfigTexture(sideConfigRaw[4]));
+                        cachedQuads[5] = new RetexturedBakedQuad(builder.getQuads(EAST).get(0), getConfigTexture(sideConfigRaw[5]));
+                    }
                 }
                 builder.addFaceQuad(DOWN, cachedQuads[0]);
                 builder.addFaceQuad(UP, cachedQuads[1]);
@@ -190,7 +189,10 @@ public class FluidCellBakedModel extends UnderlayBakedModel implements IDynamicB
                 builder.addFaceQuad(EAST, cachedQuads[5]);
 
                 ret = builder.build();
-                MODEL_CACHE.put(Arrays.asList(itemHash, level, configHash, fluidHash), ret);
+                BakedModel prev = MODEL_CACHE.putIfAbsent(Arrays.asList(itemHash, level, configHash, fluidHash), ret);
+                if (prev != null) {
+                    ret = prev;
+                }
             }
             return ret;
         }
@@ -220,16 +222,20 @@ public class FluidCellBakedModel extends UnderlayBakedModel implements IDynamicB
         return FLUID_CELL_LEVELS[MathHelper.clamp(level, 0, 8)];
     }
 
-    private FluidStack getFluid(CompoundTag tag) {
+    private FluidStack getFluid(CompoundTag tag, @Nullable ClientLevel level) {
 
-        if (tag == null) {
+        if (tag == null || level == null) {
             return FluidStack.EMPTY;
         }
         ListTag tanks = tag.getList(TAG_TANK_INV, TAG_COMPOUND);
         if (tanks.isEmpty()) {
             return FluidStack.EMPTY;
         }
-        return FluidStack.loadFluidStackFromNBT(tanks.getCompound(0));
+        CompoundTag tankTag = tanks.getCompound(0);
+        if (!tankTag.contains("id")) {
+            return FluidStack.EMPTY;
+        }
+        return FluidStack.parseOptional(level.registryAccess(), tankTag);
     }
 
     private byte[] getSideConfigRaw(CompoundTag tag) {

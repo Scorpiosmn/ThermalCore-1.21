@@ -7,7 +7,7 @@ import cofh.lib.util.helpers.MathHelper;
 import cofh.lib.util.helpers.StringHelper;
 import cofh.thermal.core.common.entity.projectile.ThrownFlorb;
 import net.minecraft.core.Position;
-import net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -17,6 +17,7 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ProjectileItem;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DispenserBlock;
@@ -32,7 +33,7 @@ import static cofh.core.util.helpers.FluidHelper.addPotionTooltip;
 import static cofh.core.util.helpers.ItemHelper.cloneStack;
 import static cofh.lib.util.helpers.StringHelper.*;
 
-public class FlorbItem extends FluidContainerItem {
+public class FlorbItem extends FluidContainerItem implements ProjectileItem {
 
     protected static int cooldown = 0;
 
@@ -43,7 +44,7 @@ public class FlorbItem extends FluidContainerItem {
 
         ProxyUtils.registerColorable(this);
 
-        DispenserBlock.registerBehavior(this, DISPENSER_BEHAVIOR);
+        DispenserBlock.registerProjectileBehavior(this);
     }
 
     @Override
@@ -61,10 +62,10 @@ public class FlorbItem extends FluidContainerItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
 
         List<Component> additionalTooltips = new ArrayList<>();
-        tooltipDelegate(stack, worldIn, additionalTooltips, flagIn);
+        tooltipDelegate(stack, context.level(), additionalTooltips, flagIn);
         tooltip.addAll(additionalTooltips);
 
         //        if (SecurityHelper.isItemClaimable(stack)) {
@@ -136,24 +137,21 @@ public class FlorbItem extends FluidContainerItem {
     }
     // endregion
 
-    // region DISPENSER BEHAVIOR
-    private static final AbstractProjectileDispenseBehavior DISPENSER_BEHAVIOR = new AbstractProjectileDispenseBehavior() {
+    // region ProjectileItem
+    @Override
+    public Projectile asProjectile(Level worldIn, Position position, ItemStack stackIn, Direction direction) {
 
-        @Override
-        public Projectile getProjectile(Level worldIn, Position position, ItemStack stackIn) {
+        ThrownFlorb florb = new ThrownFlorb(worldIn, position.x(), position.y(), position.z());
+        ItemStack throwStack = cloneStack(stackIn, 1);
+        throwStack.setDamageValue(1);
+        florb.setItem(throwStack);
+        return florb;
+    }
 
-            ThrownFlorb florb = new ThrownFlorb(worldIn, position.x(), position.y(), position.z());
-            ItemStack throwStack = cloneStack(stackIn, 1);
-            throwStack.setDamageValue(1);
-            florb.setItem(throwStack);
-            return florb;
-        }
+    @Override
+    public DispenseConfig createDispenseConfig() {
 
-        @Override
-        protected float getUncertainty() {
-
-            return 3.0F;
-        }
-    };
+        return DispenseConfig.builder().uncertainty(3.0F).build();
+    }
     // endregion
 }

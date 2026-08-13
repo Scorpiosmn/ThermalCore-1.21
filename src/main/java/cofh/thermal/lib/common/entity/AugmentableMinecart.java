@@ -13,6 +13,7 @@ import cofh.lib.common.inventory.ItemStorageCoFH;
 import cofh.lib.common.inventory.SimpleItemInv;
 import cofh.lib.util.Utils;
 import cofh.thermal.core.common.config.ThermalCoreConfig;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -23,8 +24,8 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -32,7 +33,6 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -78,11 +78,9 @@ public abstract class AugmentableMinecart extends AbstractMinecartCoFH implement
 
         super.onPlaced(stack);
 
-        CompoundTag nbt = stack.getTag();
-        if (nbt != null) {
-            if (nbt.contains(TAG_AUGMENTS)) {
-                inventory.readSlotsUnordered(nbt.getList(TAG_AUGMENTS, TAG_COMPOUND), invSize() - augSize());
-            }
+        CompoundTag nbt = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (nbt.contains(TAG_AUGMENTS)) {
+            inventory.readSlotsUnordered(Utils.BUILTIN_ACCESS, nbt.getList(TAG_AUGMENTS, TAG_COMPOUND), invSize() - augSize());
         }
         updateAugmentState();
 
@@ -92,15 +90,16 @@ public abstract class AugmentableMinecart extends AbstractMinecartCoFH implement
     @Override
     public ItemStack createItemStackTag(ItemStack stack) {
 
-        CompoundTag nbt = stack.getOrCreateTag();
+        CompoundTag nbt = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
 
         if (ThermalCoreConfig.keepAugments.get() && augSize() > 0) {
-            getItemInv().writeSlotsToNBTUnordered(nbt, TAG_AUGMENTS, invSize() - augSize());
-            if (stack.getItem() instanceof IAugmentableItem augmentableItem) {
-                List<ItemStack> items = getAugmentsAsList();
-                augmentableItem.updateAugmentState(stack, items);
-            }
-            filter.write(nbt);
+            getItemInv().writeSlotsToNBTUnordered(Utils.BUILTIN_ACCESS, nbt, TAG_AUGMENTS, invSize() - augSize());
+            filter.write(Utils.BUILTIN_ACCESS, nbt);
+        }
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(nbt));
+        if (ThermalCoreConfig.keepAugments.get() && augSize() > 0 && stack.getItem() instanceof IAugmentableItem augmentableItem) {
+            List<ItemStack> items = getAugmentsAsList();
+            augmentableItem.updateAugmentState(stack, items);
         }
         return super.createItemStackTag(stack);
     }
@@ -110,13 +109,13 @@ public abstract class AugmentableMinecart extends AbstractMinecartCoFH implement
 
         super.readAdditionalSaveData(compound);
 
-        inventory.read(compound);
+        inventory.read(this.registryAccess(), compound);
 
         if (compound.contains(TAG_AUGMENTS)) {
-            inventory.readSlotsUnordered(compound.getList(TAG_AUGMENTS, TAG_COMPOUND), invSize() - augSize());
+            inventory.readSlotsUnordered(this.registryAccess(), compound.getList(TAG_AUGMENTS, TAG_COMPOUND), invSize() - augSize());
         }
         updateAugmentState();
-        filter.read(compound);
+        filter.read(this.registryAccess(), compound);
     }
 
     @Override
@@ -124,10 +123,8 @@ public abstract class AugmentableMinecart extends AbstractMinecartCoFH implement
 
         super.addAdditionalSaveData(compound);
 
-        compound.put(TAG_ENCHANTMENTS, enchantments);
-
-        inventory.write(compound);
-        filter.write(compound);
+        inventory.write(this.registryAccess(), compound);
+        filter.write(this.registryAccess(), compound);
     }
 
     // region HELPERS
@@ -194,7 +191,7 @@ public abstract class AugmentableMinecart extends AbstractMinecartCoFH implement
             }
             setAttributesFromAugment(augmentData);
         }
-        finalizeAttributes(EnchantmentHelper.deserializeEnchantments(enchantments));
+        finalizeAttributes(enchantments);
         augmentNBT = null;
     }
 
@@ -232,7 +229,7 @@ public abstract class AugmentableMinecart extends AbstractMinecartCoFH implement
         // creativeSlots |= getAttributeMod(augmentData, TAG_AUGMENT_ITEM_CREATIVE) > 0;
     }
 
-    protected abstract void finalizeAttributes(Map<Enchantment, Integer> enchantmentMap);
+    protected abstract void finalizeAttributes(ItemEnchantments enchantments);
     // endregion
 
     // region IStorageCallback

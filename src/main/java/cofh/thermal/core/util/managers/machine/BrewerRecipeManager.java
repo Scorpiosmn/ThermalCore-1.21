@@ -1,6 +1,7 @@
 package cofh.thermal.core.util.managers.machine;
 
 import cofh.core.common.fluid.PotionFluid;
+import cofh.core.util.ProxyUtils;
 import cofh.core.util.helpers.FluidHelper;
 import cofh.lib.api.fluid.IFluidStackHolder;
 import cofh.lib.api.inventory.IItemStackHolder;
@@ -16,15 +17,23 @@ import cofh.thermal.lib.util.recipes.internal.IMachineRecipe;
 import cofh.thermal.lib.util.recipes.internal.SimpleMachineRecipe;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionBrewing;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.*;
 
@@ -151,9 +160,8 @@ public class BrewerRecipeManager extends AbstractManager implements IRecipeManag
     public void refresh(RecipeManager recipeManager) {
 
         clear();
-        var recipes = recipeManager.byType(BREWER_RECIPE.get());
-        for (var entry : recipes.entrySet()) {
-            addRecipe(entry.getValue().value());
+        for (var recipe : recipeManager.getAllRecipesFor(BREWER_RECIPE.get())) {
+            addRecipe(recipe.value());
         }
 
         if (defaultPotionRecipes) {
@@ -177,12 +185,26 @@ public class BrewerRecipeManager extends AbstractManager implements IRecipeManag
 
     protected void createConvertedRecipes() {
 
-        for (PotionBrewing.Mix<Potion> mix : PotionBrewing.POTION_MIXES) {
-            createConvertedRecipe(mix.from, mix.ingredient, mix.to);
+        var level = ProxyUtils.getClientWorld();
+        var registryAccess = level != null ? level.registryAccess() : ServerLifecycleHooks.getCurrentServer() != null ? ServerLifecycleHooks.getCurrentServer().registryAccess() : null;
+        PotionBrewing potionBrewing = level != null ? level.potionBrewing() : ServerLifecycleHooks.getCurrentServer() != null ? ServerLifecycleHooks.getCurrentServer().potionBrewing() : PotionBrewing.EMPTY;
+        if (registryAccess == null) {
+            return;
+        }
+        for (Holder<Potion> inputPotion : registryAccess.lookupOrThrow(Registries.POTION).listElements().toList()) {
+            ItemStack input = PotionContents.createItemStack(Items.POTION, inputPotion);
+            for (Item reagent : BuiltInRegistries.ITEM) {
+                ItemStack reagentStack = new ItemStack(reagent);
+                if (!potionBrewing.hasPotionMix(input, reagentStack)) {
+                    continue;
+                }
+                ItemStack output = potionBrewing.mix(reagentStack, input);
+                output.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY).potion().ifPresent(outputPotion -> createConvertedRecipe(inputPotion, Ingredient.of(reagent), outputPotion));
+            }
         }
     }
 
-    protected boolean createConvertedRecipe(Potion inputPotion, Ingredient reagent, Potion outputPotion) {
+    protected boolean createConvertedRecipe(Holder<Potion> inputPotion, Ingredient reagent, Holder<Potion> outputPotion) {
 
         if (inputPotion == null || reagent == null || outputPotion == null) {
             return false;
@@ -191,9 +213,9 @@ public class BrewerRecipeManager extends AbstractManager implements IRecipeManag
         return true;
     }
 
-    protected RecipeHolder<BrewerRecipe> convert(Potion inputPotion, Ingredient reagent, Potion outputPotion) {
+    protected RecipeHolder<BrewerRecipe> convert(Holder<Potion> inputPotion, Ingredient reagent, Holder<Potion> outputPotion) {
 
-        return new RecipeHolder<>(new ResourceLocation(ID_THERMAL, "brewer_" + inputPotion.hashCode()),
+        return new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(ID_THERMAL, "brewer_" + inputPotion.hashCode()),
                 new BrewerRecipe(defaultEnergy, 0.0F,
                         Collections.singletonList(reagent),
                         Collections.singletonList(FluidIngredient.of(PotionFluid.getPotionAsFluid(defaultPotion, inputPotion))),

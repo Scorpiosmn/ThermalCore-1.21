@@ -3,9 +3,11 @@ package cofh.thermal.lib.common.item;
 import cofh.core.common.item.FluidContainerItem;
 import cofh.core.common.item.IAugmentableItem;
 import cofh.core.util.helpers.AugmentDataHelper;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.List;
@@ -59,15 +61,11 @@ public class FluidContainerItemAugmentable extends FluidContainerItem implements
         return getPropertyWithDefault(stack, TAG_AUGMENT_BASE_MOD, 1.0F);
     }
 
-    protected void setAttributesFromAugment(ItemStack container, CompoundTag augmentData) {
+    protected void setAttributesFromAugment(CompoundTag properties, CompoundTag augmentData) {
 
-        CompoundTag subTag = container.getTagElement(TAG_PROPERTIES);
-        if (subTag == null) {
-            return;
-        }
-        setAttributeFromAugmentMax(subTag, augmentData, TAG_AUGMENT_BASE_MOD);
-        setAttributeFromAugmentMax(subTag, augmentData, TAG_AUGMENT_FLUID_STORAGE);
-        setAttributeFromAugmentMax(subTag, augmentData, TAG_AUGMENT_FLUID_CREATIVE);
+        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_BASE_MOD);
+        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_FLUID_STORAGE);
+        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_FLUID_CREATIVE);
     }
 
     protected int getEffectAmplifier(MobEffectInstance effect, ItemStack stack) {
@@ -120,18 +118,21 @@ public class FluidContainerItemAugmentable extends FluidContainerItem implements
     @Override
     public void updateAugmentState(ItemStack container, List<ItemStack> augments) {
 
-        container.getOrCreateTag().put(TAG_PROPERTIES, new CompoundTag());
+        CompoundTag nbt = container.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        CompoundTag properties = new CompoundTag();
         for (ItemStack augment : augments) {
             CompoundTag augmentData = AugmentDataHelper.getAugmentData(augment);
             if (augmentData == null) {
                 continue;
             }
-            setAttributesFromAugment(container, augmentData);
+            setAttributesFromAugment(properties, augmentData);
         }
+        nbt.put(TAG_PROPERTIES, properties);
+        container.set(DataComponents.CUSTOM_DATA, CustomData.of(nbt));
         FluidStack fluid = getFluid(container);
         if (isCreative(container, FLUID)) {
             if (!fluid.isEmpty()) {
-                fill(container, new FluidStack(fluid, getSpace(container)), EXECUTE);
+                fill(container, fluid.copyWithAmount(getSpace(container)), EXECUTE);
             }
         } else {
             int fluidExcess = getFluidAmount(container) - getCapacity(container);

@@ -16,11 +16,11 @@ public class ThermalClientConfig implements IBaseConfig {
 
         blockAmbientSounds = builder
                 .comment("If TRUE, some 'Thermal Series' Blocks will have ambient sounds.")
-                .define("Ambient Block Sounds", blockAmbientSounds);
+                .define("Ambient Block Sounds", true);
 
         mobAmbientSounds = builder
                 .comment("If TRUE, some 'Thermal Series' Mobs will have ambient sounds.")
-                .define("Ambient Mob Sounds", mobAmbientSounds);
+                .define("Ambient Mob Sounds", true);
 
         builder.pop();
 
@@ -28,11 +28,11 @@ public class ThermalClientConfig implements IBaseConfig {
 
         festiveMobs = builder
                 .comment("If TRUE, some Mobs will have festive hats on certain days. Disabling this will disable it for ALL mobs, including vanilla. May require client restart.")
-                .define("Festive Mobs", festiveMobs);
+                .define("Festive Mobs", true);
 
         festiveVanillaMobs = builder
                 .comment("If TRUE, some vanilla Mobs will also have festive hats on certain days. May require client restart.")
-                .define("Festive Vanilla Mobs", festiveMobs);
+                .define("Festive Vanilla Mobs", true);
 
         builder.pop();
     }

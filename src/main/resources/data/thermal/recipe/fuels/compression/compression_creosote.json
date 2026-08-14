@@ -1,7 +1,7 @@
 {
   "type": "thermal:compression_fuel",
   "ingredient": {
-    "fluid_tag": "forge:creosote",
+    "fluid_tag": "c:creosote",
     "amount": 1000
   },
   "energy": 20000

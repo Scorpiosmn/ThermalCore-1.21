@@ -1,7 +1,7 @@
 {
   "type": "thermal:numismatic_fuel",
   "ingredient": {
-    "tag": "forge:coins/signalum"
+    "tag": "c:coins/signalum"
   },
   "energy": 80000
 }

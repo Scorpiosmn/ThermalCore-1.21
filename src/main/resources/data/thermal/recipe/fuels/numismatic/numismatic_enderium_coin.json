@@ -1,7 +1,7 @@
 {
   "type": "thermal:numismatic_fuel",
   "ingredient": {
-    "tag": "forge:coins/enderium"
+    "tag": "c:coins/enderium"
   },
   "energy": 160000
 }

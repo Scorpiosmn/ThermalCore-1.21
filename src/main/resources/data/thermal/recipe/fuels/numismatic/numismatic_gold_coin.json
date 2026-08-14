@@ -1,7 +1,7 @@
 {
   "type": "thermal:numismatic_fuel",
   "ingredient": {
-    "tag": "forge:coins/gold"
+    "tag": "c:coins/gold"
   },
   "energy": 64000
 }

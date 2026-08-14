@@ -1,7 +1,7 @@
 {
   "type": "thermal:lapidary_fuel",
   "ingredient": {
-    "tag": "forge:gems/sapphire"
+    "tag": "c:gems/sapphire"
   },
   "energy": 125000
 }

@@ -133,7 +133,9 @@ public class SatchelItem extends InventoryContainerItemAugmentable implements IC
                 container.setPopTime(5);
                 player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2F, ((MathHelper.RANDOM.nextFloat() - MathHelper.RANDOM.nextFloat()) * 0.7F + 1.0F) * 2.0F);
                 CompoundTag customData = container.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-                containerInv.write(BUILTIN_ACCESS, customData.getCompound(TAG_ITEM_INV));
+                CompoundTag inventoryTag = customData.getCompound(TAG_ITEM_INV);
+                containerInv.write(BUILTIN_ACCESS, inventoryTag);
+                customData.put(TAG_ITEM_INV, inventoryTag);
                 container.set(DataComponents.CUSTOM_DATA, CustomData.of(customData));
                 satchelItem.onContainerInventoryChanged(container);
             }

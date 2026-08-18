@@ -36,6 +36,7 @@ public class DeviceNullifierBlockEntity extends DeviceBlockEntity {
     // protected ItemStorageCoFH tankSlot = new ItemStorageCoFH(1, (item) -> FluidHelper.hasFluidHandlerCap(item) || item.getItem() == Items.POTION);
 
     protected FluidStorageCoFH nullTank = new NullFluidStorage(BUCKET_VOLUME * 64, fluid -> filter.valid(fluid)).setEnabled(() -> isActive);
+    private final Object[] compatCapSlot = new Object[1];
 
     public DeviceNullifierBlockEntity(BlockPos pos, BlockState state) {
 
@@ -62,6 +63,12 @@ public class DeviceNullifierBlockEntity extends DeviceBlockEntity {
             }
         }
         return true;
+    }
+
+    /** Opaque cache slot for optional-mod capability handlers. */
+    public Object[] compatCapSlot() {
+
+        return compatCapSlot;
     }
 
     public void emptyBin() {

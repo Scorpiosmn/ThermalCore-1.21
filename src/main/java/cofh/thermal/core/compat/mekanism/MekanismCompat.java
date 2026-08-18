@@ -1,5 +1,6 @@
 package cofh.thermal.core.compat.mekanism;
 
+import cofh.core.util.filter.EmptyFilter;
 import cofh.thermal.core.common.block.entity.device.DeviceNullifierBlockEntity;
 import cofh.thermal.core.compat.mekanism.block.entity.ChemicalCellBlockEntity;
 import cofh.thermal.core.compat.mekanism.item.ChemicalCellBlockItem;
@@ -51,14 +52,28 @@ public final class MekanismCompat {
 
     }
 
-    /** Initializes optional registrations after Mekanism has been detected. */
+    /**
+     * Intentionally empty: invoking this triggers static initialization of this class, which performs
+     * the DeferredRegister registrations above. Do not remove - see the ThermalCore constructor call site.
+     */
     public static void register() {
 
     }
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
 
-        event.registerBlockEntity(CHEMICAL_HANDLER, DEVICE_NULLIFIER_TILE.get(), (tile, side) -> new NullChemicalHandler((DeviceNullifierBlockEntity) tile));
+        event.registerBlockEntity(CHEMICAL_HANDLER, DEVICE_NULLIFIER_TILE.get(), (tile, side) -> {
+            DeviceNullifierBlockEntity host = (DeviceNullifierBlockEntity) tile;
+            Object[] slot = host.compatCapSlot();
+            IChemicalHandler handler;
+            if (slot[0] instanceof IChemicalHandler cached) {
+                handler = cached;
+            } else {
+                handler = new NullChemicalHandler(host);
+                slot[0] = handler;
+            }
+            return handler;
+        });
         event.registerBlockEntity(CHEMICAL_HANDLER, CHEMICAL_CELL_TILE.get(), (tile, side) -> ((ChemicalCellBlockEntity) tile).getChemicalHandlerCapability(side));
         event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, CHEMICAL_CELL_TILE.get(),
                 (tile, side) -> ((ChemicalCellBlockEntity) tile).getItemHandlerCapability(side));
@@ -71,6 +86,11 @@ public final class MekanismCompat {
         private NullChemicalHandler(DeviceNullifierBlockEntity host) {
 
             this.host = host;
+        }
+
+        private boolean canVoid() {
+
+            return host.isActive && host.getFilter() instanceof EmptyFilter;
         }
 
         @Override
@@ -100,13 +120,13 @@ public final class MekanismCompat {
         @Override
         public boolean isValid(int tank, ChemicalStack stack) {
 
-            return tank == 0 && !stack.isEmpty();
+            return tank == 0 && !stack.isEmpty() && canVoid();
         }
 
         @Override
         public ChemicalStack insertChemical(int tank, ChemicalStack stack, Action action) {
 
-            if (tank != 0 || stack.isEmpty() || !host.isActive) {
+            if (tank != 0 || stack.isEmpty() || !canVoid()) {
                 return stack;
             }
             long accepted = Math.min(stack.getAmount(), CAPACITY);

@@ -44,7 +44,7 @@ public class FluidCellBlockEntity extends StorageCellBlockEntity implements ITic
 
     public static final BiPredicate<ItemStack, List<ItemStack>> AUG_VALIDATOR = createAllowValidator(TAG_AUGMENT_TYPE_UPGRADE, TAG_AUGMENT_TYPE_FLUID, TAG_AUGMENT_TYPE_FILTER);
 
-    public static final int BASE_CAPACITY = TANK_MEDIUM * 4;
+    public static final int BASE_CAPACITY = BUCKET_VOLUME * 12;
 
     protected FluidStorageCoFH fluidStorage = new FluidStorageRestrictable(BASE_CAPACITY, fluid -> filter.valid(fluid))
             .setTransferLimits(() -> amountInput, () -> amountOutput);

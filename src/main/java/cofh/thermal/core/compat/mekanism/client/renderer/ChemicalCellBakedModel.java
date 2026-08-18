@@ -35,7 +35,13 @@ import static cofh.thermal.core.compat.mekanism.block.entity.ChemicalCellBlockEn
 public class ChemicalCellBakedModel extends BakedModelWrapper<BakedModel> implements IDynamicBakedModel {
 
     private static final Map<List<Integer>, BakedQuad> FACE_QUAD_CACHE = new ConcurrentHashMap<>();
-    private static final Map<Integer, BakedQuad[]> SIDE_QUAD_CACHE = new ConcurrentHashMap<>();
+    private record SideConfigKey(byte down, byte up, byte north, byte south, byte west, byte east) {
+        static SideConfigKey of(byte[] sides) {
+            return new SideConfigKey(sides[0], sides[1], sides[2], sides[3], sides[4], sides[5]);
+        }
+    }
+
+    private static final Map<SideConfigKey, BakedQuad[]> SIDE_QUAD_CACHE = new ConcurrentHashMap<>();
 
     public ChemicalCellBakedModel(BakedModel originalModel) {
 
@@ -67,14 +73,20 @@ public class ChemicalCellBakedModel extends BakedModelWrapper<BakedModel> implem
         }
 
         byte[] sideConfig = modelData.get(ModelUtils.SIDES);
-        if (sideConfig != null) {
-            int configHash = Arrays.hashCode(sideConfig);
-            BakedQuad[] cached = SIDE_QUAD_CACHE.computeIfAbsent(configHash, key -> new BakedQuad[6]);
+        if (sideConfig != null && sideConfig.length == 6) {
+            BakedQuad[] cached = SIDE_QUAD_CACHE.computeIfAbsent(SideConfigKey.of(sideConfig), key -> new BakedQuad[6]);
             int index = side.get3DDataValue();
-            if (cached[index] == null) {
-                cached[index] = new RetexturedBakedQuad(baseQuad, getConfigTexture(sideConfig[index]));
+            BakedQuad sideQuad = cached[index];
+            if (sideQuad == null) {
+                synchronized (cached) {
+                    sideQuad = cached[index];
+                    if (sideQuad == null) {
+                        sideQuad = new RetexturedBakedQuad(baseQuad, getConfigTexture(sideConfig[index]));
+                        cached[index] = sideQuad;
+                    }
+                }
             }
-            quads.add(cached[index]);
+            quads.add(sideQuad);
         }
         ChemicalStack chemical = modelData.get(CHEMICAL);
         if (chemical != null && !chemical.isEmpty() && quads.size() > 1) {

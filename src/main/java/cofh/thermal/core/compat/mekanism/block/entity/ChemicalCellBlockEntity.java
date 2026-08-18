@@ -43,7 +43,6 @@ import static cofh.lib.api.StorageGroup.ACCESSIBLE;
 import static cofh.lib.util.Constants.BUCKET_VOLUME;
 import static cofh.lib.util.constants.NBTTags.TAG_AUGMENT_BASE_MOD;
 import static cofh.lib.util.constants.NBTTags.TAG_AUGMENT_FLUID_STORAGE;
-import static cofh.lib.util.constants.NBTTags.TAG_AUGMENT_TYPE_FILTER;
 import static cofh.lib.util.constants.NBTTags.TAG_AUGMENT_TYPE_FLUID;
 import static cofh.lib.util.constants.NBTTags.TAG_AUGMENT_TYPE_UPGRADE;
 import static cofh.thermal.core.common.config.ThermalCoreConfig.storageAugments;
@@ -58,7 +57,7 @@ public class ChemicalCellBlockEntity extends StorageCellBlockEntity implements I
 
     public static final int BASE_CAPACITY = BUCKET_VOLUME * 20;
     public static final ModelProperty<ChemicalStack> CHEMICAL = new ModelProperty<>();
-    public static final BiPredicate<ItemStack, List<ItemStack>> AUG_VALIDATOR = createAllowValidator(TAG_AUGMENT_TYPE_UPGRADE, TAG_AUGMENT_TYPE_FLUID, TAG_AUGMENT_TYPE_FILTER);
+    public static final BiPredicate<ItemStack, List<ItemStack>> AUG_VALIDATOR = createAllowValidator(TAG_AUGMENT_TYPE_UPGRADE, TAG_AUGMENT_TYPE_FLUID);
 
     public static final String TAG_CHEMICAL = "Chemical";
 
@@ -145,19 +144,29 @@ public class ChemicalCellBlockEntity extends StorageCellBlockEntity implements I
         if (handler == null) {
             return;
         }
-        for (int tank = 0; tank < handler.getChemicalTanks() && chemicalStorage.getSpace() > 0; ++tank) {
-            long limit = Math.min(Math.min(amountInput, chemicalStorage.getSpace()), handler.getChemicalTankCapacity(tank));
-            ChemicalStack extracted = handler.extractChemical(tank, limit, Action.SIMULATE);
-            if (extracted.isEmpty()) {
+        long remainingInput = Math.max(0L, Math.min((long) amountInput, chemicalStorage.getSpace()));
+        for (int tank = 0; tank < handler.getChemicalTanks() && remainingInput > 0; ++tank) {
+            long limit = Math.min(remainingInput, chemicalStorage.getSpace());
+            if (limit <= 0) {
+                break;
+            }
+            ChemicalStack simulated = handler.extractChemical(tank, limit, Action.SIMULATE);
+            if (simulated.isEmpty()) {
                 continue;
             }
-            ChemicalStack remainder = chemicalStorage.insertChemical(0, extracted, Action.SIMULATE);
-            long accepted = extracted.getAmount() - remainder.getAmount();
-            if (accepted > 0) {
-                ChemicalStack actual = handler.extractChemical(tank, accepted, Action.EXECUTE);
-                chemicalStorage.insertChemical(0, actual, Action.EXECUTE);
-                return;
+            ChemicalStack remainder = chemicalStorage.insertChemical(0, simulated, Action.EXECUTE);
+            long filled = simulated.getAmount() - remainder.getAmount();
+            if (filled <= 0) {
+                continue;
             }
+            ChemicalStack extracted = handler.extractChemical(tank, filled, Action.EXECUTE);
+            long taken = ChemicalStack.isSameChemical(extracted, simulated)
+                    ? Math.min(extracted.getAmount(), filled)
+                    : 0;
+            if (taken < filled) {
+                chemicalStorage.extractChemical(0, filled - taken, Action.EXECUTE);
+            }
+            remainingInput = Math.max(0L, remainingInput - taken);
         }
     }
 
@@ -227,14 +236,17 @@ public class ChemicalCellBlockEntity extends StorageCellBlockEntity implements I
         boolean chemicalChanged = !ChemicalStack.isSameChemical(renderChemical, current);
         renderChemical = current.isEmpty() ? ChemicalStack.EMPTY : current.copy();
 
-        int comparator = current.isEmpty() ? 0 : 1 + (int) ((double) current.getAmount() * 14 / chemicalStorage.getCapacity());
+        long capacity = Math.max(1L, chemicalStorage.getCapacity());
+        int comparator = current.isEmpty() ? 0
+                : Math.clamp(1 + (int) ((double) current.getAmount() * 14.0D / capacity), 1, 15);
         if (comparator != compareTracker) {
             compareTracker = comparator;
             if (send) {
                 setChanged();
             }
         }
-        int level = current.isEmpty() ? 0 : 1 + Math.min((int) ((double) current.getAmount() * 8 / chemicalStorage.getCapacity()), 7);
+        int level = current.isEmpty() ? 0
+                : Math.clamp(1 + (int) ((double) current.getAmount() * 8.0D / capacity), 1, 8);
         if (level != levelTracker || chemicalChanged) {
             levelTracker = level;
             if (send) {
@@ -252,12 +264,22 @@ public class ChemicalCellBlockEntity extends StorageCellBlockEntity implements I
     @Override
     protected void finalizeAttributes(net.minecraft.world.item.enchantment.ItemEnchantments enchantments) {
 
-        super.finalizeAttributes(enchantments);
+        boolean maxIn = amountInput == getMaxInput();
+        boolean maxOut = amountOutput == getMaxOutput();
 
         float holding = getHoldingMod(enchantments);
         float base = getAttributeModWithDefault(augmentNBT, TAG_AUGMENT_BASE_MOD, 1.0F);
         float storage = holding * base * getAttributeModWithDefault(augmentNBT, TAG_AUGMENT_FLUID_STORAGE, 1.0F);
         chemicalStorage.setCapacity(Math.round(BASE_CAPACITY * storage));
+
+        super.finalizeAttributes(enchantments);
+
+        if (maxIn) {
+            amountInput = getMaxInput();
+        }
+        if (maxOut) {
+            amountOutput = getMaxOutput();
+        }
 
         amountInput = MathHelper.clamp(amountInput, 0, getMaxInput());
         amountOutput = MathHelper.clamp(amountOutput, 0, getMaxOutput());
@@ -389,12 +411,14 @@ public class ChemicalCellBlockEntity extends StorageCellBlockEntity implements I
         }
 
         private void read(HolderLookup.Provider provider, CompoundTag nbt) {
-
+            if (nbt.contains("Capacity")) {
+                setCapacity(nbt.getLong("Capacity"));
+            }
             setChemical(ChemicalStack.parseOptional(provider, nbt.getCompound(TAG_CHEMICAL)));
         }
 
         private void write(HolderLookup.Provider provider, CompoundTag nbt) {
-
+            nbt.putLong("Capacity", capacity);
             if (!chemical.isEmpty()) {
                 nbt.put(TAG_CHEMICAL, chemical.saveOptional(provider));
             }

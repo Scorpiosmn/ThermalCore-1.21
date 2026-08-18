@@ -3,6 +3,7 @@ package cofh.thermal.core.compat.mekanism.item;
 import cofh.thermal.core.compat.mekanism.block.entity.ChemicalCellBlockEntity;
 import cofh.thermal.lib.common.item.BlockItemAugmentable;
 import mekanism.api.chemical.ChemicalStack;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -33,18 +34,16 @@ public class ChemicalCellBlockItem extends BlockItemAugmentable {
     @Override
     protected void tooltipDelegate(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
 
-        ChemicalStack chemical = getChemical(stack);
+        HolderLookup.Provider access = level == null ? BUILTIN_ACCESS : level.registryAccess();
+        CompoundTag blockTag = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).copyTag();
+        ChemicalStack chemical = ChemicalStack.parseOptional(access, blockTag.getCompound(ChemicalCellBlockEntity.TAG_CHEMICAL));
+        long capacity = blockTag.contains("Capacity") ? Math.max(0L, blockTag.getLong("Capacity"))
+                : ChemicalCellBlockEntity.BASE_CAPACITY;
         if (!chemical.isEmpty()) {
             tooltip.add(Component.translatable(chemical.getTranslationKey()));
         }
         tooltip.add(getTextComponent(localize("info.cofh.amount") + ": " + format(chemical.getAmount()) + " / "
-                + format(ChemicalCellBlockEntity.BASE_CAPACITY) + " " + localize("info.cofh.unit_mb")));
-    }
-
-    private ChemicalStack getChemical(ItemStack stack) {
-
-        CompoundTag blockTag = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).copyTag();
-        return ChemicalStack.parseOptional(BUILTIN_ACCESS, blockTag.getCompound(ChemicalCellBlockEntity.TAG_CHEMICAL));
+                + format(capacity) + " " + localize("info.cofh.unit_mb")));
     }
 
 }

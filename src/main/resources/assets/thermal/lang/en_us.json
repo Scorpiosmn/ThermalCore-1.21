@@ -113,9 +113,9 @@
   "info.thermal.redprint.data.RSControl": "Redstone Control",
   "info.thermal.redprint.data.Sides": "Side Configuration",
   "info.thermal.redprint.data.Xfer": "Transfer Control",
-  "info.thermal.redprint.use": "Use on a block to copy its settings.",
-  "info.thermal.redprint.use.contents": "Use on a block to apply settings.",
-  "info.thermal.redprint.use.sneak": "Use while sneaking to clear.",
+  "info.thermal.redprint.use": "Sneak-right-click a block to copy its settings.",
+  "info.thermal.redprint.use.contents": "Right-click a block to apply settings.",
+  "info.thermal.redprint.use.sneak": "Sneak-left-click air to clear.",
 
   "info.thermal.satchel.0": "Stores and collects items. Can be secured.",
   "info.thermal.satchel.1": "If a filter is installed, use while sneaking to configure.",

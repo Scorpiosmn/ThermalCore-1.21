@@ -1,10 +1,12 @@
 package cofh.thermal.core.client.event;
 
 import cofh.core.util.ProxyClient;
+import cofh.core.common.network.packet.server.ItemLeftClickPacket;
 import cofh.core.util.helpers.AugmentDataHelper;
 import cofh.core.util.helpers.vfx.RenderTypes;
 import cofh.lib.api.block.entity.IAreaEffectTile;
 import cofh.thermal.core.common.item.WrenchItem;
+import cofh.thermal.core.common.item.RedprintItem;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -17,6 +19,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
@@ -26,6 +30,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.joml.Matrix4f;
 
 import java.util.HashSet;
@@ -94,6 +99,17 @@ public class TCoreClientEvents {
                         .append(modText)
                 );
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void handleLeftClickEmpty(PlayerInteractEvent.LeftClickEmpty event) {
+
+        Player player = event.getEntity();
+        ItemStack stack = player.getMainHandItem();
+        if (event.getHand() == InteractionHand.MAIN_HAND && player.isSecondaryUseActive() &&
+                stack.getItem() instanceof RedprintItem && stack.has(DataComponents.CUSTOM_DATA)) {
+            ItemLeftClickPacket.sendToServer();
         }
     }
 

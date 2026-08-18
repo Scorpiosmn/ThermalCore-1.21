@@ -1,6 +1,7 @@
 package cofh.thermal.core.common.item;
 
 import cofh.core.common.item.ItemCoFH;
+import cofh.core.common.item.ILeftClickHandlerItem;
 import cofh.core.util.ProxyUtils;
 import cofh.lib.api.IConveyableData;
 import cofh.lib.api.control.ISecurable;
@@ -33,7 +34,7 @@ import static cofh.lib.util.helpers.StringHelper.getTextComponent;
 import static net.minecraft.ChatFormatting.DARK_GRAY;
 import static net.minecraft.ChatFormatting.GRAY;
 
-public class RedprintItem extends ItemCoFH implements IPlacementItem {
+public class RedprintItem extends ItemCoFH implements IPlacementItem, ILeftClickHandlerItem {
 
     public RedprintItem(Properties builder) {
 
@@ -96,13 +97,6 @@ public class RedprintItem extends ItemCoFH implements IPlacementItem {
         if (player == null || Utils.isClientWorld(world)) {
             return false;
         }
-        if (player.isSecondaryUseActive() && context.getHand() == InteractionHand.MAIN_HAND) {
-            if (stack.has(DataComponents.CUSTOM_DATA)) {
-                player.level.playSound(null, player.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.5F, 0.3F);
-                updateDataState(stack, new CompoundTag());
-            }
-            return true;
-        }
         BlockPos pos = context.getClickedPos();
         BlockEntity tile = world.getBlockEntity(pos);
 
@@ -110,18 +104,18 @@ public class RedprintItem extends ItemCoFH implements IPlacementItem {
             return false;
         }
         if (tile instanceof IConveyableData conveyableTile) {
-            if (!stack.has(DataComponents.CUSTOM_DATA) && context.getHand() == InteractionHand.MAIN_HAND) {
-                CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+            if (player.isSecondaryUseActive() && context.getHand() == InteractionHand.MAIN_HAND) {
+                CompoundTag tag = new CompoundTag();
                 conveyableTile.writeConveyableData(player, tag);
                 tile.setChanged();
                 if (tag.isEmpty()) {
-                    updateDataState(stack, new CompoundTag());
                     return false;
                 } else {
                     updateDataState(stack, tag);
                     player.level.playSound(null, player.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.5F, 0.7F);
+                    return true;
                 }
-            } else if (stack.has(DataComponents.CUSTOM_DATA)) {
+            } else if (!player.isSecondaryUseActive() && stack.has(DataComponents.CUSTOM_DATA)) {
                 conveyableTile.readConveyableData(player, stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag());
                 player.level.playSound(null, player.blockPosition(), SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.PLAYERS, 0.5F, 0.8F);
                 return true;
@@ -154,14 +148,16 @@ public class RedprintItem extends ItemCoFH implements IPlacementItem {
     public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
 
         ItemStack stack = player.getItemInHand(hand);
-        if (player.isSecondaryUseActive()) {
-            if (stack.has(DataComponents.CUSTOM_DATA)) {
-                player.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 0.5F, 0.3F);
-            }
+        return InteractionResultHolder.pass(stack);
+    }
+
+    @Override
+    public void onLeftClick(Player player, ItemStack stack) {
+
+        if (!player.level().isClientSide() && player.isSecondaryUseActive() && stack.has(DataComponents.CUSTOM_DATA)) {
+            player.level().playSound(null, player.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.5F, 0.3F);
             updateDataState(stack, new CompoundTag());
         }
-        player.swing(hand);
-        return InteractionResultHolder.success(stack);
     }
 
     // region IPlacementItem

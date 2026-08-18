@@ -113,9 +113,9 @@
   "info.thermal.redprint.data.RSControl": "红石控制",
   "info.thermal.redprint.data.Sides": "侧面配置",
   "info.thermal.redprint.data.Xfer": "传输控制",
-  "info.thermal.redprint.use": "右击方块以复制其配置信息。",
+  "info.thermal.redprint.use": "潜行右击方块以复制其配置信息。",
   "info.thermal.redprint.use.contents": "右击方块以应用所复制的配置信息。",
-  "info.thermal.redprint.use.sneak": "潜行右击以清除所复制的配置信息。",
+  "info.thermal.redprint.use.sneak": "对着空气潜行左击以清除所复制的配置信息。",
 
   "info.thermal.satchel.0": "存储和收集掉落物。可安装信素安全锁。",
   "info.thermal.satchel.1": "如果安装了一个物品过滤规则, 手持并潜行右击以打开物品过滤界面。",

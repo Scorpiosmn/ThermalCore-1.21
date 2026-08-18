@@ -36,6 +36,7 @@ public class TCoreDataGen {
         // gen.addProvider(event.includeServer(), new TCoreAdvancementProvider(gen));
         gen.addProvider(event.includeServer(), new TCoreLootTableProvider(output, lookup));
         gen.addProvider(event.includeServer(), new TCoreRecipeProvider(output, lookup));
+        gen.addProvider(event.includeServer(), new TCoreChemicalCompatDataProvider(output));
 
         gen.addProvider(event.includeClient(), new TCoreBlockStateProvider(output, exFileHelper));
         gen.addProvider(event.includeClient(), new TCoreItemModelProvider(output, exFileHelper));

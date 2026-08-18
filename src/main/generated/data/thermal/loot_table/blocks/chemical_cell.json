@@ -3,11 +3,19 @@
   "pools": [
     {
       "bonus_rolls": 0.0,
-      "conditions": [{"condition": "minecraft:survives_explosion"}],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
       "entries": [
         {
           "type": "minecraft:item",
-          "functions": [{"function": "cofh_core:nbt_sync"}],
+          "functions": [
+            {
+              "function": "cofh_core:nbt_sync"
+            }
+          ],
           "name": "thermal:chemical_cell"
         }
       ],

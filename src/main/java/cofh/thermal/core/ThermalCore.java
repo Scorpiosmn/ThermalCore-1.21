@@ -45,6 +45,7 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
@@ -136,6 +137,9 @@ public class ThermalCore {
         FLUID_TYPES.register(modEventBus);
 
         TCoreBlocks.register();
+        if (ModList.get().isLoaded("mekanism")) {
+            cofh.thermal.core.compat.mekanism.MekanismCompat.register();
+        }
         TCoreItems.register();
         TCoreFluids.register();
         ThermalCreativeTabs.register();
@@ -233,6 +237,9 @@ public class ThermalCore {
     private void capabilitySetup(RegisterCapabilitiesEvent event) {
 
         TCoreBlockEntities.capabilitySetup(event);
+        if (ModList.get().isLoaded("mekanism")) {
+            cofh.thermal.core.compat.mekanism.MekanismCompat.registerCapabilities(event);
+        }
     }
 
     private void menuScreenSetup(final RegisterMenuScreensEvent event) {
@@ -253,6 +260,9 @@ public class ThermalCore {
         event.register(SATCHEL_CONTAINER.get(), SatchelScreen::new);
         event.register(ENERGY_CELL_CONTAINER.get(), EnergyCellScreen::new);
         event.register(FLUID_CELL_CONTAINER.get(), FluidCellScreen::new);
+        if (ModList.get().isLoaded("mekanism")) {
+            cofh.thermal.core.compat.mekanism.client.MekanismClientCompat.registerMenuScreens(event);
+        }
 
         // event.register(ITEM_CELL_CONTAINER, ItemCellScreen::new);
     }

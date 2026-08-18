@@ -120,6 +120,8 @@ dependencies {
     implementation("top.theillusivec4.curios:curios-neoforge:${curios_version}") {
         transitive false
     }
+
+    compileOnly(files("../Mekanism-1.21.1-10.7.19.85-api.jar"))
 }
 
 def commonManifest = {

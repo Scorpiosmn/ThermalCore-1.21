@@ -398,6 +398,7 @@
   "block.thermal.energy_cell": "红石通量单元",
   "block.thermal.energy_cell_frame": "红石通量单元框架",
   "block.thermal.fluid_cell": "流体单元",
+  "block.thermal.chemical_cell": "化学品单元",
   "block.thermal.fluid_cell_frame": "流体单元框架",
   "block.thermal.item_cell": "物品单元",
   "block.thermal.item_cell_frame": "物品单元框架",
@@ -482,6 +483,8 @@
 
   "info.thermal.fluid_cell.0": "存储与传输流体。",
   "info.thermal.fluid_cell.1": "按住§e§oShift§r键和/或§e§oCtrl§r键来精确调整数值。",
+  "info.thermal.chemical_cell.0": "存储与传输化学品。",
+  "info.thermal.chemical_cell.1": "按住§e§oShift§r键和/或§e§oCtrl§r键来精确调整数值。",
 
   "info.thermal.item_cell.0": "存储与传输物品。",
   "info.thermal.item_cell.1": "按住§e§oShift§r键和/或§e§oCtrl§r键来精确调整数值。",
@@ -638,6 +641,7 @@
 
   "block.thermal.energy_cell.keyword": "能量 rf 存储",
   "block.thermal.fluid_cell.keyword": "流体 存储 容器 储罐 缸",
+  "block.thermal.chemical_cell.keyword": "mek 化学品 气体 浆液 颜料 灌注 存储 容器 储罐",
   "block.thermal.item_cell.keyword": "缓存 物品 存储",
 
   "block.thermal.charge_bench.keyword": "能量 充电器 rf",

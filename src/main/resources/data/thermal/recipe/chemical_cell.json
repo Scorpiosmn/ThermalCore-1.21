@@ -1,0 +1,17 @@
+{
+  "neoforge:conditions": [
+    {"type": "neoforge:mod_loaded", "modid": "mekanism"},
+    {"type": "neoforge:mod_loaded", "modid": "thermal_dynamics"}
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {"item": "thermal:chemical_duct"},
+    "I": {"tag": "c:ingots/iron"},
+    "P": {"item": "thermal:redstone_servo"},
+    "R": {"item": "thermal:cured_rubber"},
+    "X": {"tag": "thermal:glass/hardened"}
+  },
+  "pattern": ["RXR", "ICI", "RPR"],
+  "result": {"id": "thermal:chemical_cell", "count": 1}
+}

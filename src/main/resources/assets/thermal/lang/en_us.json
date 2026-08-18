@@ -401,6 +401,7 @@
   "block.thermal.energy_cell": "Redstone Flux Cell",
   "block.thermal.energy_cell_frame": "Redstone Flux Cell Frame",
   "block.thermal.fluid_cell": "Fluid Cell",
+  "block.thermal.chemical_cell": "Chemical Cell",
   "block.thermal.fluid_cell_frame": "Fluid Cell Frame",
   "block.thermal.item_cell": "Item Cell",
   "block.thermal.item_cell_frame": "Item Cell Frame",
@@ -485,6 +486,8 @@
 
   "info.thermal.fluid_cell.0": "Stores and transfers Fluids.",
   "info.thermal.fluid_cell.1": "Hold §e§oShift§r and/or §e§oCtrl§r to fine tune amounts.",
+  "info.thermal.chemical_cell.0": "Stores and transfers Chemicals.",
+  "info.thermal.chemical_cell.1": "Hold §e§oShift§r and/or §e§oCtrl§r to fine tune amounts.",
 
   "info.thermal.item_cell.0": "Stores and transfers Items.",
   "info.thermal.item_cell.1": "Hold §e§oShift§r and/or §e§oCtrl§r to fine tune amounts.",
@@ -641,6 +644,7 @@
 
   "block.thermal.energy_cell.keyword": "energy rf storage",
   "block.thermal.fluid_cell.keyword": "fluid storage tank",
+  "block.thermal.chemical_cell.keyword": "mekanism chemical gas slurry pigment infusion storage tank",
   "block.thermal.item_cell.keyword": "cache item storage",
 
   "block.thermal.charge_bench.keyword": "energy recharger rf",

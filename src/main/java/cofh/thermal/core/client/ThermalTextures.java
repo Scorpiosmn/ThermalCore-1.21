@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.TextureAtlasStitchedEvent;
 
 import static cofh.lib.util.constants.ModIds.ID_THERMAL;
@@ -32,6 +33,9 @@ public class ThermalTextures {
         EnergyCellBakedModel.clearCache();
         FluidCellBakedModel.clearCache();
         ItemCellBakedModel.clearCache();
+        if (ModList.get().isLoaded("mekanism")) {
+            cofh.thermal.core.compat.mekanism.client.MekanismClientCompat.clearModelCache();
+        }
 
         TextureAtlas map = event.getAtlas();
         MACHINE_CONFIG_NONE = map.getSprite(MACHINE_CONFIG_NONE_LOC);

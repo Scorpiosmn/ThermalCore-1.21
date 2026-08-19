@@ -42,11 +42,11 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import static cofh.core.client.renderer.model.ModelUtils.FLUID;
-import static cofh.core.util.helpers.AugmentableHelper.getAttributeMod;
 import static cofh.lib.api.StorageGroup.ACCESSIBLE;
 import static cofh.lib.util.Constants.*;
 import static cofh.lib.util.constants.NBTTags.*;
 import static cofh.thermal.core.init.registries.TCoreBlockEntities.DEVICE_POTION_DIFFUSER_TILE;
+import static cofh.thermal.lib.util.ThermalAugmentRules.compoundAdditiveBonus;
 import static cofh.thermal.lib.util.ThermalAugmentRules.createAllowValidator;
 
 public class DevicePotionDiffuserBlockEntity extends DeviceBlockEntity implements ITickableTile, IAreaEffectTile {
@@ -385,10 +385,10 @@ public class DevicePotionDiffuserBlockEntity extends DeviceBlockEntity implement
 
         super.setAttributesFromAugment(augmentData);
 
-        radius += getAttributeMod(augmentData, TAG_AUGMENT_RADIUS);
+        radius = RADIUS + Math.round(compoundAdditiveBonus(radius - RADIUS, augmentData.getFloat(TAG_AUGMENT_RADIUS)));
 
-        potionAmpMod += getAttributeMod(augmentData, TAG_AUGMENT_POTION_AMPLIFIER);
-        potionDurMod += getAttributeMod(augmentData, TAG_AUGMENT_POTION_DURATION);
+        potionAmpMod = compoundAdditiveBonus(potionAmpMod, augmentData.getFloat(TAG_AUGMENT_POTION_AMPLIFIER));
+        potionDurMod = compoundAdditiveBonus(potionDurMod, augmentData.getFloat(TAG_AUGMENT_POTION_DURATION));
     }
 
     @Override

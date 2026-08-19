@@ -38,10 +38,13 @@ import static cofh.core.util.helpers.ItemHelper.itemsEqualWithTags;
 import static cofh.lib.util.Constants.BASE_CHANCE;
 import static cofh.lib.util.constants.BlockStatePropertiesCoFH.ACTIVE;
 import static cofh.lib.util.constants.NBTTags.*;
+import static cofh.thermal.lib.util.ThermalAugmentRules.setAttributeFromAugmentCompound;
 import static cofh.thermal.lib.util.ThermalAugmentRules.MACHINE_NO_FLUID_VALIDATOR;
 import static cofh.thermal.lib.util.ThermalAugmentRules.MACHINE_VALIDATOR;
 
 public abstract class MachineBlockEntity extends Reconfigurable4WayBlockEntity implements ITickableTile.IServerTickable, IMachineInventory {
+
+    protected static final int BASE_SPEED_MULTIPLIER = 10;
 
     protected ItemStorageCoFH chargeSlot = new ItemStorageCoFH(1, EnergyHelper::hasEnergyHandlerCap);
 
@@ -502,7 +505,7 @@ public abstract class MachineBlockEntity extends Reconfigurable4WayBlockEntity i
 
         process = nbt.getInt(TAG_PROCESS);
         processMax = nbt.getInt(TAG_PROCESS_MAX);
-        processTick = nbt.getInt(TAG_PROCESS_TICK);
+        processTick = processMax > 0 ? Math.min(baseProcessTick, processMax) : baseProcessTick;
     }
 
     @Override
@@ -547,8 +550,8 @@ public abstract class MachineBlockEntity extends Reconfigurable4WayBlockEntity i
 
         super.setAttributesFromAugment(augmentData);
 
-        setAttributeFromAugmentAdd(augmentNBT, augmentData, TAG_AUGMENT_MACHINE_POWER);
-        setAttributeFromAugmentAdd(augmentNBT, augmentData, TAG_AUGMENT_MACHINE_SPEED);
+        setAttributeFromAugmentCompound(augmentNBT, augmentData, TAG_AUGMENT_MACHINE_POWER);
+        setAttributeFromAugmentCompound(augmentNBT, augmentData, TAG_AUGMENT_MACHINE_SPEED);
 
         machineProperties.setAttributesFromAugment(augmentData);
 
@@ -565,7 +568,9 @@ public abstract class MachineBlockEntity extends Reconfigurable4WayBlockEntity i
         float totalMod = baseMod * powerMod * speedMod;
 
         machineProperties.finalizeAttributes();
-        processTick = baseProcessTick = Math.round(getBaseProcessTick() * totalMod);
+        processTick = baseProcessTick = Math.round(getBaseProcessTick() * BASE_SPEED_MULTIPLIER * totalMod);
+        energyStorage.setCapacity(Math.max(energyStorage.getMaxEnergyStored(), baseProcessTick));
+        energyStorage.setMaxReceive(Math.max(energyStorage.getMaxReceive(), baseProcessTick));
     }
     // endregion
 

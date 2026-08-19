@@ -40,6 +40,7 @@ import static cofh.core.init.CoreEntityDataSerializers.FLUID_STACK_DATA_SERIALIZ
 import static cofh.core.util.helpers.AugmentableHelper.*;
 import static cofh.core.util.helpers.ItemHelper.cloneStack;
 import static cofh.lib.util.constants.NBTTags.*;
+import static cofh.thermal.lib.util.ThermalAugmentRules.setAttributeFromAugmentMultiply;
 import static net.minecraft.nbt.Tag.TAG_COMPOUND;
 
 public abstract class AugmentableMinecart extends AbstractMinecartCoFH implements IStorageCallback, IFilterable {
@@ -216,11 +217,11 @@ public abstract class AugmentableMinecart extends AbstractMinecartCoFH implement
 
     protected void setAttributesFromAugment(CompoundTag augmentData) {
 
-        setAttributeFromAugmentMax(augmentNBT, augmentData, TAG_AUGMENT_BASE_MOD);
-        setAttributeFromAugmentMax(augmentNBT, augmentData, TAG_AUGMENT_RF_XFER);
-        setAttributeFromAugmentMax(augmentNBT, augmentData, TAG_AUGMENT_RF_STORAGE);
-        setAttributeFromAugmentMax(augmentNBT, augmentData, TAG_AUGMENT_FLUID_STORAGE);
-        setAttributeFromAugmentMax(augmentNBT, augmentData, TAG_AUGMENT_ITEM_STORAGE);
+        setAttributeFromAugmentMultiply(augmentNBT, augmentData, TAG_AUGMENT_BASE_MOD);
+        setAttributeFromAugmentMultiply(augmentNBT, augmentData, TAG_AUGMENT_RF_XFER);
+        setAttributeFromAugmentMultiply(augmentNBT, augmentData, TAG_AUGMENT_RF_STORAGE);
+        setAttributeFromAugmentMultiply(augmentNBT, augmentData, TAG_AUGMENT_FLUID_STORAGE);
+        setAttributeFromAugmentMultiply(augmentNBT, augmentData, TAG_AUGMENT_ITEM_STORAGE);
 
         setAttributeFromAugmentString(augmentNBT, augmentData, TAG_FILTER_TYPE);
 

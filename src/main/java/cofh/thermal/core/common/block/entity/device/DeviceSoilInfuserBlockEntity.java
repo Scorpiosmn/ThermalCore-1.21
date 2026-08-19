@@ -28,11 +28,11 @@ import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
-import static cofh.core.util.helpers.AugmentableHelper.getAttributeMod;
 import static cofh.core.util.helpers.AugmentableHelper.getAttributeModWithDefault;
 import static cofh.lib.api.StorageGroup.INTERNAL;
 import static cofh.lib.util.constants.NBTTags.*;
 import static cofh.thermal.core.init.registries.TCoreBlockEntities.DEVICE_SOIL_INFUSER_TILE;
+import static cofh.thermal.lib.util.ThermalAugmentRules.compoundAdditiveBonus;
 import static cofh.thermal.lib.util.ThermalAugmentRules.createAllowValidator;
 
 public class DeviceSoilInfuserBlockEntity extends AugmentableBlockEntity implements ITickableTile.IServerTickable, IAreaEffectTile {
@@ -200,7 +200,7 @@ public class DeviceSoilInfuserBlockEntity extends AugmentableBlockEntity impleme
 
         super.setAttributesFromAugment(augmentData);
 
-        radius += getAttributeMod(augmentData, TAG_AUGMENT_RADIUS);
+        radius = RADIUS + Math.round(compoundAdditiveBonus(radius - RADIUS, augmentData.getFloat(TAG_AUGMENT_RADIUS)));
     }
 
     @Override

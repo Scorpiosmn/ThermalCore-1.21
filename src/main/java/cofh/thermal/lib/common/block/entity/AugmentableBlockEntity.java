@@ -79,6 +79,7 @@ import static cofh.lib.api.StorageGroup.INTERNAL;
 import static cofh.lib.util.constants.BlockStatePropertiesCoFH.ACTIVE;
 import static cofh.lib.util.constants.NBTTags.*;
 import static cofh.thermal.core.init.registries.TCoreSounds.SOUND_TINKER;
+import static cofh.thermal.lib.util.ThermalAugmentRules.setAttributeFromAugmentMultiply;
 import static net.minecraft.nbt.Tag.TAG_COMPOUND;
 
 public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements ISecurableTile, IRedstoneControllableTile, MenuProvider, IFilterable {
@@ -646,11 +647,11 @@ public abstract class AugmentableBlockEntity extends BlockEntityCoFH implements 
         redstoneControlFeature |= getAttributeMod(augmentData, TAG_AUGMENT_FEATURE_RS_CONTROL) > 0;
         xpStorageFeature |= getAttributeMod(augmentData, TAG_AUGMENT_FEATURE_XP_STORAGE) > 0;
 
-        setAttributeFromAugmentMax(augmentNBT, augmentData, TAG_AUGMENT_BASE_MOD);
-        setAttributeFromAugmentMax(augmentNBT, augmentData, TAG_AUGMENT_RF_XFER);
-        setAttributeFromAugmentMax(augmentNBT, augmentData, TAG_AUGMENT_RF_STORAGE);
-        setAttributeFromAugmentMax(augmentNBT, augmentData, TAG_AUGMENT_FLUID_STORAGE);
-        setAttributeFromAugmentMax(augmentNBT, augmentData, TAG_AUGMENT_ITEM_STORAGE);
+        setAttributeFromAugmentMultiply(augmentNBT, augmentData, TAG_AUGMENT_BASE_MOD);
+        setAttributeFromAugmentMultiply(augmentNBT, augmentData, TAG_AUGMENT_RF_XFER);
+        setAttributeFromAugmentMultiply(augmentNBT, augmentData, TAG_AUGMENT_RF_STORAGE);
+        setAttributeFromAugmentMultiply(augmentNBT, augmentData, TAG_AUGMENT_FLUID_STORAGE);
+        setAttributeFromAugmentMultiply(augmentNBT, augmentData, TAG_AUGMENT_ITEM_STORAGE);
 
         setAttributeFromAugmentString(augmentNBT, augmentData, TAG_FILTER_TYPE);
 

@@ -27,12 +27,12 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static cofh.core.init.CoreFluids.EXPERIENCE_FLUID;
-import static cofh.core.util.helpers.AugmentableHelper.getAttributeMod;
 import static cofh.lib.api.StorageGroup.OUTPUT;
 import static cofh.lib.util.Constants.MB_PER_XP;
 import static cofh.lib.util.Constants.TANK_MEDIUM;
 import static cofh.lib.util.constants.NBTTags.*;
 import static cofh.thermal.core.init.registries.TCoreBlockEntities.DEVICE_XP_CONDENSER_TILE;
+import static cofh.thermal.lib.util.ThermalAugmentRules.compoundAdditiveBonus;
 import static cofh.thermal.lib.util.ThermalAugmentRules.createAllowValidator;
 
 public class DeviceXpCondenserBlockEntity extends DeviceBlockEntity implements ITickableTile.IServerTickable, IAreaEffectTile {
@@ -143,7 +143,7 @@ public class DeviceXpCondenserBlockEntity extends DeviceBlockEntity implements I
 
         super.setAttributesFromAugment(augmentData);
 
-        radius += getAttributeMod(augmentData, TAG_AUGMENT_RADIUS);
+        radius = RADIUS + Math.round(compoundAdditiveBonus(radius - RADIUS, augmentData.getFloat(TAG_AUGMENT_RADIUS)));
     }
 
     @Override

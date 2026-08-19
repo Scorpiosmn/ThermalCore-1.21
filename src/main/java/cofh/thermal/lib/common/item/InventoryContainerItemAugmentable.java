@@ -15,6 +15,7 @@ import java.util.function.IntSupplier;
 import static cofh.core.util.helpers.AugmentableHelper.getPropertyWithDefault;
 import static cofh.core.util.helpers.AugmentableHelper.setAttributeFromAugmentMax;
 import static cofh.lib.util.constants.NBTTags.*;
+import static cofh.thermal.lib.util.ThermalAugmentRules.setAttributeFromAugmentMultiply;
 
 public class InventoryContainerItemAugmentable extends InventoryContainerItem implements IAugmentableItem {
 
@@ -51,8 +52,8 @@ public class InventoryContainerItemAugmentable extends InventoryContainerItem im
 
     protected void setAttributesFromAugment(CompoundTag properties, CompoundTag augmentData) {
 
-        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_BASE_MOD);
-        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_ITEM_STORAGE);
+        setAttributeFromAugmentMultiply(properties, augmentData, TAG_AUGMENT_BASE_MOD);
+        setAttributeFromAugmentMultiply(properties, augmentData, TAG_AUGMENT_ITEM_STORAGE);
         setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_ITEM_CREATIVE);
     }
 

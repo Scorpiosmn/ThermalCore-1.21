@@ -31,6 +31,7 @@ import static cofh.lib.api.ContainerType.FLUID;
 import static cofh.lib.util.Utils.BUILTIN_ACCESS;
 import static cofh.lib.util.constants.NBTTags.*;
 import static cofh.lib.util.helpers.StringHelper.*;
+import static cofh.thermal.lib.util.ThermalAugmentRules.setAttributeFromAugmentMultiply;
 import static net.minecraft.nbt.Tag.TAG_COMPOUND;
 import static net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE;
 
@@ -63,8 +64,8 @@ public class FluidCellBlockItem extends BlockItemAugmentable implements IFluidCo
 
     protected void setAttributesFromAugment(CompoundTag properties, CompoundTag augmentData) {
 
-        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_BASE_MOD);
-        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_FLUID_STORAGE);
+        setAttributeFromAugmentMultiply(properties, augmentData, TAG_AUGMENT_BASE_MOD);
+        setAttributeFromAugmentMultiply(properties, augmentData, TAG_AUGMENT_FLUID_STORAGE);
         setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_FLUID_CREATIVE);
     }
 

@@ -31,10 +31,10 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import static cofh.core.client.renderer.model.ModelUtils.UNDERLAY;
-import static cofh.core.util.helpers.AugmentableHelper.getAttributeMod;
 import static cofh.lib.api.StorageGroup.ACCESSIBLE;
 import static cofh.lib.util.constants.NBTTags.*;
 import static cofh.thermal.core.init.registries.TCoreBlockEntities.DEVICE_COLLECTOR_TILE;
+import static cofh.thermal.lib.util.ThermalAugmentRules.compoundAdditiveBonus;
 import static cofh.thermal.lib.util.ThermalAugmentRules.createAllowValidator;
 
 public class DeviceCollectorBlockEntity extends DeviceBlockEntity implements ITickableTile.IServerTickable, IAreaEffectTile {
@@ -185,7 +185,7 @@ public class DeviceCollectorBlockEntity extends DeviceBlockEntity implements ITi
 
         super.setAttributesFromAugment(augmentData);
 
-        radius += getAttributeMod(augmentData, TAG_AUGMENT_RADIUS);
+        radius = RADIUS + Math.round(compoundAdditiveBonus(radius - RADIUS, augmentData.getFloat(TAG_AUGMENT_RADIUS)));
     }
 
     @Override

@@ -36,6 +36,7 @@ import static cofh.lib.util.constants.BlockStatePropertiesCoFH.FACING_ALL;
 import static cofh.lib.util.constants.NBTTags.*;
 import static cofh.thermal.lib.util.ThermalAugmentRules.DYNAMO_NO_FLUID_VALIDATOR;
 import static cofh.thermal.lib.util.ThermalAugmentRules.DYNAMO_VALIDATOR;
+import static cofh.thermal.lib.util.ThermalAugmentRules.setAttributeFromAugmentCompound;
 
 public abstract class DynamoBlockEntity extends AugmentableBlockEntity implements ITickableTile.IServerTickable {
 
@@ -309,7 +310,7 @@ public abstract class DynamoBlockEntity extends AugmentableBlockEntity implement
 
         super.setAttributesFromAugment(augmentData);
 
-        setAttributeFromAugmentAdd(augmentNBT, augmentData, TAG_AUGMENT_DYNAMO_POWER);
+        setAttributeFromAugmentCompound(augmentNBT, augmentData, TAG_AUGMENT_DYNAMO_POWER);
 
         energyMod *= getAttributeModWithDefault(augmentData, TAG_AUGMENT_DYNAMO_ENERGY, 1.0F);
 

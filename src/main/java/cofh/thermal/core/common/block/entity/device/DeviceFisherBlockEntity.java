@@ -41,11 +41,11 @@ import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
-import static cofh.core.util.helpers.AugmentableHelper.getAttributeMod;
 import static cofh.lib.api.StorageGroup.*;
 import static cofh.lib.util.constants.BlockStatePropertiesCoFH.FACING_HORIZONTAL;
 import static cofh.lib.util.constants.NBTTags.*;
 import static cofh.thermal.core.init.registries.TCoreBlockEntities.DEVICE_FISHER_TILE;
+import static cofh.thermal.lib.util.ThermalAugmentRules.compoundAdditiveBonus;
 import static cofh.thermal.lib.util.ThermalAugmentRules.createAllowValidator;
 
 public class DeviceFisherBlockEntity extends DeviceBlockEntity implements ITickableTile.IServerTickable, IAreaEffectTile {
@@ -275,7 +275,7 @@ public class DeviceFisherBlockEntity extends DeviceBlockEntity implements ITicka
 
         super.setAttributesFromAugment(augmentData);
 
-        radius += getAttributeMod(augmentData, TAG_AUGMENT_RADIUS);
+        radius = RADIUS + Math.round(compoundAdditiveBonus(radius - RADIUS, augmentData.getFloat(TAG_AUGMENT_RADIUS)));
     }
 
     @Override

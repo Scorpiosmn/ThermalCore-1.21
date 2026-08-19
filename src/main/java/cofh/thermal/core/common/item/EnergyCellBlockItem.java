@@ -24,6 +24,7 @@ import static cofh.core.util.helpers.AugmentableHelper.setAttributeFromAugmentMa
 import static cofh.lib.api.ContainerType.ENERGY;
 import static cofh.lib.util.constants.NBTTags.*;
 import static cofh.lib.util.helpers.StringHelper.*;
+import static cofh.thermal.lib.util.ThermalAugmentRules.setAttributeFromAugmentMultiply;
 
 public class EnergyCellBlockItem extends BlockItemAugmentable implements IEnergyContainerItem {
 
@@ -48,9 +49,9 @@ public class EnergyCellBlockItem extends BlockItemAugmentable implements IEnergy
 
     protected void setAttributesFromAugment(CompoundTag properties, CompoundTag augmentData) {
 
-        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_BASE_MOD);
-        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_RF_STORAGE);
-        setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_RF_XFER);
+        setAttributeFromAugmentMultiply(properties, augmentData, TAG_AUGMENT_BASE_MOD);
+        setAttributeFromAugmentMultiply(properties, augmentData, TAG_AUGMENT_RF_STORAGE);
+        setAttributeFromAugmentMultiply(properties, augmentData, TAG_AUGMENT_RF_XFER);
         setAttributeFromAugmentMax(properties, augmentData, TAG_AUGMENT_RF_CREATIVE);
     }
 

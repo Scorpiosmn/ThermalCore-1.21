@@ -3,6 +3,7 @@ package cofh.thermal.lib.util;
 import cofh.core.util.helpers.AugmentDataHelper;
 import cofh.core.util.helpers.ItemHelper;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
+import static cofh.core.util.helpers.AugmentableHelper.*;
 import static cofh.lib.util.constants.NBTTags.*;
 
 public class ThermalAugmentRules {
@@ -64,16 +66,6 @@ public class ThermalAugmentRules {
                 TAG_AUGMENT_MACHINE_XP
         ));
         // Maximized (Not exclusive with other sets)
-        ATTR_MAX.addAll(Arrays.asList(
-                TAG_AUGMENT_BASE_MOD,
-
-                TAG_AUGMENT_RF_STORAGE,
-                TAG_AUGMENT_RF_XFER,
-
-                TAG_AUGMENT_FLUID_STORAGE,
-
-                TAG_AUGMENT_MACHINE_MIN_OUTPUT
-        ));
         // Inverse - HIGHER = WORSE (Not exclusive with other sets)
         ATTR_INV.addAll(Arrays.asList(
                 TAG_AUGMENT_MACHINE_CATALYST,
@@ -128,6 +120,36 @@ public class ThermalAugmentRules {
     public static boolean isInteger(String mod) {
 
         return ATTR_INT.contains(mod);
+    }
+
+    public static float compoundAdditiveBonus(float currentBonus, float augmentBonus) {
+
+        return (1.0F + currentBonus) * (1.0F + augmentBonus) - 1.0F;
+    }
+
+    public static float compoundAdditiveFactor(float currentFactor, float augmentBonus) {
+
+        return currentFactor * (1.0F + augmentBonus);
+    }
+
+    public static void setAttributeFromAugmentCompound(CompoundTag attributes, CompoundTag augmentData, String attribute) {
+
+        if (!augmentData.contains(attribute)) {
+            return;
+        }
+        float currentFactor = getAttributeModWithDefault(attributes, attribute, 1.0F);
+        float augmentBonus = getAttributeMod(augmentData, attribute);
+        setAttribute(attributes, attribute, compoundAdditiveFactor(currentFactor, augmentBonus));
+    }
+
+    public static void setAttributeFromAugmentMultiply(CompoundTag attributes, CompoundTag augmentData, String attribute) {
+
+        if (!augmentData.contains(attribute)) {
+            return;
+        }
+        float currentFactor = getAttributeModWithDefault(attributes, attribute, 1.0F);
+        float augmentFactor = getAttributeModWithDefault(augmentData, attribute, 1.0F);
+        setAttribute(attributes, attribute, currentFactor * augmentFactor);
     }
     // endregion
 

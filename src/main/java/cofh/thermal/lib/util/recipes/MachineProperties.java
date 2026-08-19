@@ -9,6 +9,8 @@ import static cofh.core.util.helpers.AugmentableHelper.getAttributeModWithDefaul
 import static cofh.lib.util.Constants.AUG_SCALE_MAX;
 import static cofh.lib.util.Constants.AUG_SCALE_MIN;
 import static cofh.lib.util.constants.NBTTags.*;
+import static cofh.thermal.lib.util.ThermalAugmentRules.compoundAdditiveBonus;
+import static cofh.thermal.lib.util.ThermalAugmentRules.compoundAdditiveFactor;
 
 public class MachineProperties implements IRecipeCatalyst {
 
@@ -31,13 +33,13 @@ public class MachineProperties implements IRecipeCatalyst {
 
     public void setAttributesFromAugment(CompoundTag augmentData) {
 
-        primaryMod += getAttributeMod(augmentData, TAG_AUGMENT_MACHINE_PRIMARY);
-        secondaryMod += getAttributeMod(augmentData, TAG_AUGMENT_MACHINE_SECONDARY);
+        primaryMod = compoundAdditiveFactor(primaryMod, getAttributeMod(augmentData, TAG_AUGMENT_MACHINE_PRIMARY));
+        secondaryMod = compoundAdditiveFactor(secondaryMod, getAttributeMod(augmentData, TAG_AUGMENT_MACHINE_SECONDARY));
         energyMod *= getAttributeModWithDefault(augmentData, TAG_AUGMENT_MACHINE_ENERGY, 1.0F);
         xpMod *= getAttributeModWithDefault(augmentData, TAG_AUGMENT_MACHINE_XP, 1.0F);
         catalystMod *= getAttributeModWithDefault(augmentData, TAG_AUGMENT_MACHINE_CATALYST, 1.0F);
 
-        minOutputChance = Math.max(getAttributeMod(augmentData, TAG_AUGMENT_MACHINE_MIN_OUTPUT), minOutputChance);
+        minOutputChance = compoundAdditiveBonus(minOutputChance, getAttributeMod(augmentData, TAG_AUGMENT_MACHINE_MIN_OUTPUT));
     }
 
     public void finalizeAttributes() {

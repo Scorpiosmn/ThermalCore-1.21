@@ -28,11 +28,22 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: Checkout CoFHCore
+        uses: actions/checkout@v4
+        with:
+          repository: Scorpiosmn/CoFHCore-1.21
+          path: CoFHCore-1.21
 
-      - name: Build with Gradle
-        run: ./gradlew build --no-daemon --stacktrace
+      - name: Build and publish CoFHCore to local maven
+        run: |
+          cd CoFHCore-1.21
+          chmod +x ./gradlew
+          ./gradlew publishToMacenLocal --no-daemon
+      
+      - name: Build ThermalCore
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build --no-daemon --stacktrace
 
       - name: Upload mod jars
         uses: actions/upload-artifact@v4

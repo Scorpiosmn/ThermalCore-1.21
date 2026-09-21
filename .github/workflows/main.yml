@@ -2,10 +2,6 @@ name: Build Minecraft Mod
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - master
 
 permissions:
   contents: read

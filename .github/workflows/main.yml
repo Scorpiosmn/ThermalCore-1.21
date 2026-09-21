@@ -25,12 +25,12 @@ jobs:
 
       - name: Install local CoFHCore to maven
         run: |
-          M2_DIR=$HOME/.m2/repository/com/teamcofh/cofh_core/1.21.1-11.0.2
+          M2_DIR=$HOME/.m2/repository/com/teamcofh/cofh_core/1.21.1-11.0.2.0
           mkdir -p $M2_DIR
           
-          cp local_libs/cofh_core-1.21.1-11.0.2.jar $M2_DIR/
+          cp local_libs/cofh_core-1.21.1-11.0.2.0.jar $M2_DIR/
           
-          echo '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.teamcofh</groupId><artifactId>cofh_core</artifactId><version>1.21.1-11.0.2</version></project>' > $M2_DIR/cofh_core-1.21.1-11.0.2.pom
+          echo '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.teamcofh</groupId><artifactId>cofh_core</artifactId><version>1.21.1-11.0.2.0</version></project>' > $M2_DIR/cofh_core-1.21.1-11.0.2.0.pom
           
           ls -la $M2_DIR
 

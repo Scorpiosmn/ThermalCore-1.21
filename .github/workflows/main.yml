@@ -38,7 +38,7 @@ jobs:
         run: |
           cd CoFHCore-1.21
           chmod +x ./gradlew
-          ./gradlew publishToMacenLocal --no-daemon
+          ./gradlew :cofh_core:publishToMacenLocal --no-daemon
       
       - name: Build ThermalCore
         run: |

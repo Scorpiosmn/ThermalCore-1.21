@@ -25,13 +25,18 @@ jobs:
 
       - name: Install local CoFHCore to maven
         run: |
-          M2_DIR=$HOME/.m2/repository/com/teamcofh/cofh_core/1.21.1-11.0.2.0
+          M2_DIR=$HOME/.m2/repository/com/teamcofh/cofh_core/1.21.1-11.0.2
           mkdir -p $M2_DIR
-          
-          cp local_libs/cofh_core-1.21.1-11.0.2.0.jar $M2_DIR/
-          
-          echo '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.teamcofh</groupId><artifactId>cofh_core</artifactId><version>1.21.1-11.0.2.0</version></project>' > $M2_DIR/cofh_core-1.21.1-11.0.2.0.pom
-          
+    
+          echo "=== 当前文件树 ==="
+          ls -R local_libs
+    
+          echo "=== 开始复制并重命名 jar 包 ==="
+          find local_libs -name "cofh_core-*.jar" -exec cp {} $M2_DIR/cofh_core-1.21.1-11.0.2.jar \;
+    
+          echo '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.teamcofh</groupId><artifactId>cofh_core</artifactId><version>1.21.1-11.0.2</version></project>' > $M2_DIR/cofh_core-1.21.1-11.0.2.pom
+    
+          echo "=== 本地 Maven 仓库内容 ==="
           ls -la $M2_DIR
 
       - name: Build ThermalCore

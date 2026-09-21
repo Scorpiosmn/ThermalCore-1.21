@@ -34,11 +34,23 @@ jobs:
           repository: Scorpiosmn/CoFHCore-1.21
           path: CoFHCore-1.21
 
-      - name: Build and publish CoFHCore to local maven
+      - name: Build CoFHCore
         run: |
           cd CoFHCore-1.21
           chmod +x ./gradlew
-          ./gradlew :cofh_core:publishToMacenLocal --no-daemon
+          ./gradlew build --no-daemon
+
+      - name: Manually install CoFHCore to local maven
+        run: |
+            cd CoFHCore-1.21
+            M2_DIR=$HOME/.m2/repository/com/teamcofh/cofh_core/1.21.1-11.0.2
+            mkdir -p $M2_DIR
+    
+            find . -name "cofh_core-*.jar" -path "*/libs/*" -exec cp {} $M2_DIR/ \;
+    
+            echo '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.teamcofh</groupId><artifactId>cofh_core</artifactId><version>1.21.1-11.0.2</version></project>' > $M2_DIR/cofh_core-1.21.1-11.0.2.pom
+    
+            ls -la $M2_DIR
       
       - name: Build ThermalCore
         run: |

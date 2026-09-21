@@ -28,17 +28,16 @@ jobs:
           M2_DIR=$HOME/.m2/repository/com/teamcofh/cofh_core/1.21.1-11.0.2
           mkdir -p $M2_DIR
     
-          echo "=== 当前文件树 ==="
-          ls -R local_libs
+          echo "=== 搜索 local_libs 文件夹 ==="
+          ls -la local_libs/ || echo "警告：local_libs 文件夹不存在！"
     
-          echo "=== 开始复制并重命名 jar 包 ==="
-          find local_libs -name "cofh_core-*.jar" -exec cp {} $M2_DIR/cofh_core-1.21.1-11.0.2.jar \;
+          echo "=== 开始复制并重命名 ==="
+          find . -name "cofh_core-*.jar" -exec cp {} $M2_DIR/cofh_core-1.21.1-11.0.2.jar \;
     
           echo '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.teamcofh</groupId><artifactId>cofh_core</artifactId><version>1.21.1-11.0.2</version></project>' > $M2_DIR/cofh_core-1.21.1-11.0.2.pom
     
-          echo "=== 本地 Maven 仓库内容 ==="
+          echo "=== 最终本地 Maven 仓库内容 ==="
           ls -la $M2_DIR
-
       - name: Build ThermalCore
         run: |
           chmod +x ./gradlew

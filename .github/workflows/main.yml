@@ -38,6 +38,19 @@ jobs:
     
           echo "=== 最终本地 Maven 仓库内容 ==="
           ls -la $M2_DIR
+
+      # ================= 清除缺失依赖的 Mekanism 联动代码 =================
+      - name: Remove Mekanism Compat
+        run: |
+          echo "正在删除缺少 API 依赖的 Mekanism 联动代码..."
+          rm -rf src/main/java/cofh/thermal/core/compat/mekanism
+          echo "删除完毕！"
+
+# ================= 构建 ThermalCore =================
+      - name: Build ThermalCore
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build --no-daemon --stacktrace
       
       - name: Build ThermalCore
         run: |

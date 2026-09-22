@@ -38,6 +38,7 @@ jobs:
     
           echo "=== 最终本地 Maven 仓库内容 ==="
           ls -la $M2_DIR
+      
       - name: Build ThermalCore
         run: |
           chmod +x ./gradlew

@@ -138,7 +138,7 @@ public class ThermalCore {
 
         TCoreBlocks.register();
         if (ModList.get().isLoaded("mekanism")) {
-            cofh.thermal.core.compat.mekanism.MekanismCompat.register();
+            //cofh.thermal.core.compat.mekanism.MekanismCompat.register();
         }
         TCoreItems.register();
         TCoreFluids.register();
@@ -238,7 +238,7 @@ public class ThermalCore {
 
         TCoreBlockEntities.capabilitySetup(event);
         if (ModList.get().isLoaded("mekanism")) {
-            cofh.thermal.core.compat.mekanism.MekanismCompat.registerCapabilities(event);
+            //cofh.thermal.core.compat.mekanism.MekanismCompat.registerCapabilities(event);
         }
     }
 
@@ -261,7 +261,7 @@ public class ThermalCore {
         event.register(ENERGY_CELL_CONTAINER.get(), EnergyCellScreen::new);
         event.register(FLUID_CELL_CONTAINER.get(), FluidCellScreen::new);
         if (ModList.get().isLoaded("mekanism")) {
-            cofh.thermal.core.compat.mekanism.client.MekanismClientCompat.registerMenuScreens(event);
+            //cofh.thermal.core.compat.mekanism.client.MekanismClientCompat.registerMenuScreens(event);
         }
 
         // event.register(ITEM_CELL_CONTAINER, ItemCellScreen::new);

@@ -68,7 +68,7 @@ public class TCoreClientSetupEvents {
         event.register(ResourceLocation.fromNamespaceAndPath(ID_THERMAL, "fluid_cell"), new SimpleModel.Loader(FluidCellBakedModel::new));
         event.register(ResourceLocation.fromNamespaceAndPath(ID_THERMAL, "item_cell"), new SimpleModel.Loader(ItemCellBakedModel::new));
         if (ModList.get().isLoaded("mekanism")) {
-            cofh.thermal.core.compat.mekanism.client.MekanismClientCompat.registerModels(event);
+            //cofh.thermal.core.compat.mekanism.client.MekanismClientCompat.registerModels(event);
         }
     }
 

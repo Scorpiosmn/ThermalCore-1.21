@@ -34,7 +34,7 @@ public class ThermalTextures {
         FluidCellBakedModel.clearCache();
         ItemCellBakedModel.clearCache();
         if (ModList.get().isLoaded("mekanism")) {
-            cofh.thermal.core.compat.mekanism.client.MekanismClientCompat.clearModelCache();
+            //cofh.thermal.core.compat.mekanism.client.MekanismClientCompat.clearModelCache();
         }
 
         TextureAtlas map = event.getAtlas();

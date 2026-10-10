@@ -241,6 +241,7 @@ public class ThermalIDs {
     public static final String ID_WRENCH = "wrench";
     public static final String ID_REDPRINT = "redprint";
     public static final String ID_RF_POTATO = "rf_potato";
+    public static final String ID_FLUX_MAGNET = "flux_magnet";
     public static final String ID_XP_CRYSTAL = "xp_crystal";
     public static final String ID_LOCK = "lock";
     public static final String ID_SATCHEL = "satchel";

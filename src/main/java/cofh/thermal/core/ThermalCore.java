@@ -237,6 +237,14 @@ public class ThermalCore {
     private void capabilitySetup(RegisterCapabilitiesEvent event) {
 
         TCoreBlockEntities.capabilitySetup(event);
+
+        for (Item item : BuiltInRegistries.ITEM) {
+            if (item instanceof IEnergyContainerItem energyItem) {
+            event.registerItem(Capabilities.EnergyStorage.ITEM,
+                    (stack, ctx) -> new EnergyContainerItemWrapper(stack, energyItem), item);
+            }
+        }
+        
         if (ModList.get().isLoaded("mekanism")) {
             //cofh.thermal.core.compat.mekanism.MekanismCompat.registerCapabilities(event);
         }

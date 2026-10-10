@@ -186,7 +186,7 @@ public class TCoreItems {
         toolsTab(registerItem(ID_REDPRINT, () -> new RedprintItem(itemProperties().stacksTo(1))));
         toolsTab(registerItem(ID_RF_POTATO, () -> new EnergyContainerItem(itemProperties().stacksTo(1), 100000, 40) {
         }));
-        toolsTab(registerItem(ID_FLUX_MAGNET, () -> new FluxMagnetItem(itemProperties().stacksTol(1), 50000, 1000)));
+        toolsTab(registerItem(ID_FLUX_MAGNET, () -> new FluxMagnetItem(itemProperties().stacksTo(1), 50000, 1000)));
         toolsTab(registerItem(ID_XP_CRYSTAL, () -> new XpCrystalItem(itemProperties().stacksTo(1), 10000)));
         toolsTab(registerItem(ID_LOCK, () -> new LockItem(itemProperties())));
         toolsTab(registerItem(ID_SATCHEL, () -> new SatchelItem(itemProperties().stacksTo(1), 9)));
